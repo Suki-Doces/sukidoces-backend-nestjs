@@ -3,6 +3,7 @@ import { ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { Usuario } from '../common/decorators/usuario.decorator';
 import { CarrinhoService } from './carrinho.service';
+import { AdicionarAoCarrinhoUseCase } from './use-cases/adicionar-ao-carrinho.use-case';
 import { AddCarrinhoItemDto } from './dto/add-carrinho-item.dto';
 import { UpdateCarrinhoItemDto } from './dto/update-carrinho-item.dto';
 
@@ -10,7 +11,10 @@ import { UpdateCarrinhoItemDto } from './dto/update-carrinho-item.dto';
 @Controller('carrinho')
 @UseGuards(JwtAuthGuard)
 export class CarrinhoController {
-  constructor(private readonly carrinhoService: CarrinhoService) {}
+  constructor(
+    private readonly carrinhoService: CarrinhoService,
+    private readonly adicionarAoCarrinhoUseCase: AdicionarAoCarrinhoUseCase,
+  ) {}
 
   @Get()
   listar(@Usuario('id') usuarioId: number) {
@@ -19,7 +23,7 @@ export class CarrinhoController {
 
   @Post('add')
   adicionar(@Usuario('id') usuarioId: number, @Body() dto: AddCarrinhoItemDto) {
-    return this.carrinhoService.adicionar(usuarioId, dto);
+    return this.adicionarAoCarrinhoUseCase.execute(usuarioId, dto);
   }
 
   @Put(':itemId')

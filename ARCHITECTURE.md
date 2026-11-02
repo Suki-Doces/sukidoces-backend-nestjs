@@ -3,11 +3,16 @@
 ## Camadas
 
 ```
-Request → Middleware → Guards → Pipes → Controller → Service → Repository → TypeORM → MySQL
-                                                          ↓
-                                                   EventEmitter2 (eventos de domínio)
-                                                          ↓
-                                    AdminNotificationListener / WebhookDispatcherListener
+Request → Middleware → Guards → Pipes (DTO) → Controller
+                                                 ↓
+                                  Use Case  (uma classe por ação de negócio)
+                                   ↓                    ↓
+                       Domínio (Pedido, Produto)   Repository (interface) → TypeORM → MySQL
+                       regras puras, sem framework          ↑ implementado em RepositoriesModule
+                                   ↓
+                         EventEmitter2 (eventos de domínio)
+                                   ↓
+                 AdminNotificationListener / WebhookDispatcherListener
 ```
 
 - **Controller**: só roteamento HTTP, extração de DTO, delegação.
@@ -61,6 +66,55 @@ módulos). Entidades de consumidor único continuam com `Repository<Entity>`
 do TypeORM injetado direto — colocar uma interface ali seria abstração sem
 propósito, já que só existe uma implementação possível e um único
 consumidor.
+
+## Use Cases (um por ação de negócio)
+
+Operações com regra de negócio multi-etapa viraram uma classe com um único
+método `execute()`, e o controller chama o Use Case direto:
+
+| Módulo | Use Cases |
+|---|---|
+| `auth/use-cases` | `RegisterUseCase`, `LoginUseCase`, `RefreshTokenUseCase`, `VerifyEmailUseCase` |
+| `pedidos/use-cases` | `CheckoutUseCase`, `PagarNovamenteUseCase`, `AtualizarStatusUseCase` |
+| `usuario/use-cases` | `CancelarPedidoUseCase` |
+| `carrinho/use-cases` | `AdicionarAoCarrinhoUseCase` |
+| `produtos/use-cases` | `CriarProdutoUseCase`, `AtualizarProdutoUseCase` |
+
+O que **não** virou Use Case, de propósito: leituras e CRUD simples sem regra
+de negócio (listar categorias, ver perfil, listar clientes...). Esses
+continuam em Services — embrulhar um `repo.find()` numa classe
+`ListarCategoriasUseCase` seria cerimônia sem ganho. O critério foi "tem
+regra a isolar e testar?", não "é uma operação?".
+
+`AuthService` deixou de existir: seus 4 métodos viraram os 4 Use Cases acima,
+e a emissão do par de tokens (compartilhada) ficou em `TokenIssuerService`.
+
+## Domínio rico (Produto e Pedido)
+
+`ProdutoEntity`/`PedidoEntity` continuam sendo só o espelho da tabela
+(decoradas com TypeORM). As **regras** vivem em classes de domínio separadas,
+sem nenhum import de framework, convertidas por mappers:
+
+- `Produto` (`produtos/domain`): `temEstoqueSuficiente`, `decrementarEstoque`
+  (lança `EstoqueInsuficienteError`), `calcularSubtotal`.
+- `Pedido` (`pedidos/domain`): `cancelar` (status cancelável + janela de 2h),
+  `marcarComoPago`, `garantirQuePertenceAo`.
+
+O domínio lança `DomainError` (nunca `HttpException` — ele não sabe o que é
+HTTP). A tradução para status HTTP acontece **na fronteira**, no Use Case, via
+`translateDomainError`: `PedidoNaoPertenceAoUsuarioError` → 403, qualquer
+outro `DomainError` → 400, e erros que não são de domínio passam intactos.
+
+**Decisão importante — domínio valida, banco escreve.** `Produto.decrementarEstoque`
+muta só o objeto em memória (serve para validar). A baixa real de estoque
+continua sendo `UPDATE ... SET quantidade = quantidade - N`, atômico, dentro da
+transação. O caminho "lê a quantidade, calcula no domínio, grava o valor novo"
+teria race condition entre dois checkouts simultâneos (os dois leem 5,
+ambos gravam 4).
+
+Escopo: só `Pedido` e `Produto`, que são onde estão as regras comportamentais
+(estoque, janela de cancelamento, transições de status). As outras 10 entidades
+seguem anêmicas porque não têm regra que justifique um objeto de domínio.
 
 ## Autenticação: access + refresh token
 

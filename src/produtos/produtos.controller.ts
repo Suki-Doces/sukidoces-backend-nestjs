@@ -18,11 +18,19 @@ import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { AdminGuard } from '../common/guards/admin.guard';
 import { multerOptions } from '../common/upload/multer.config';
 import { ProdutosService } from './produtos.service';
+import { CriarProdutoUseCase } from './use-cases/criar-produto.use-case';
+import { AtualizarProdutoUseCase } from './use-cases/atualizar-produto.use-case';
+import { CreateProdutoDto } from './dto/create-produto.dto';
+import { UpdateProdutoDto } from './dto/update-produto.dto';
 
 @ApiTags('produtos')
 @Controller('produtos')
 export class ProdutosController {
-  constructor(private readonly produtosService: ProdutosService) {}
+  constructor(
+    private readonly produtosService: ProdutosService,
+    private readonly criarProdutoUseCase: CriarProdutoUseCase,
+    private readonly atualizarProdutoUseCase: AtualizarProdutoUseCase,
+  ) {}
 
   @Get('categorias')
   listarCategorias() {
@@ -52,8 +60,8 @@ export class ProdutosController {
   @Post()
   @UseGuards(JwtAuthGuard, AdminGuard)
   @UseInterceptors(FileInterceptor('imagem', multerOptions))
-  criar(@Body() body: any, @UploadedFile() file?: Express.Multer.File) {
-    return this.produtosService.criar(body, file);
+  criar(@Body() dto: CreateProdutoDto, @UploadedFile() file?: Express.Multer.File) {
+    return this.criarProdutoUseCase.execute(dto, file);
   }
 
   @Put(':id')
@@ -61,10 +69,10 @@ export class ProdutosController {
   @UseInterceptors(FileInterceptor('imagem', multerOptions))
   atualizar(
     @Param('id', ParseIntPipe) id: number,
-    @Body() body: any,
+    @Body() dto: UpdateProdutoDto,
     @UploadedFile() file?: Express.Multer.File,
   ) {
-    return this.produtosService.atualizar(id, body, file);
+    return this.atualizarProdutoUseCase.execute(id, dto, file);
   }
 
   @Delete(':id')

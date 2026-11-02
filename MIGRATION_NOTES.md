@@ -1,6 +1,46 @@
 # Notas de Migração — Prisma → TypeORM
 
-## Rodada mais recente: inversão de dependência (Clean Architecture)
+## Rodada mais recente: Use Cases + domínio rico + DTOs de produto
+
+1. **Use Cases** (11 classes em 5 módulos — ver `ARCHITECTURE.md`). Controllers
+   chamam o Use Case direto. `AuthService` foi removido (virou 4 Use Cases +
+   `TokenIssuerService`). Leituras/CRUD simples ficaram em Services.
+2. **Domínio rico** para `Pedido` e `Produto`, com mappers e hierarquia de
+   `DomainError`. Regras que antes eram `if`s espalhados nos services
+   (estoque, janela de 2h, "pedido já processado") agora vivem no domínio e têm
+   testes unitários próprios, sem Nest nem banco.
+3. **DTOs tipados para criar/atualizar produto** (`CreateProdutoDto`,
+   `UpdateProdutoDto`). Antes eram `body: any` com `parseFloat` manual no
+   service. Como o corpo é multipart (tudo chega como string), os campos
+   numéricos usam `@Type(() => Number)`.
+
+### Comportamento da API — o que mudou e o que não mudou
+
+- Status HTTP e textos de erro dos fluxos migrados foram **preservados** (o
+  domínio gera as mesmas mensagens: "Estoque insuficiente para: X. Disponível:
+  N", "Pedidos entregues não podem ser cancelados", etc.), e há testes
+  verificando isso.
+- **Mudança intencional:** criar produto agora valida o body. `preco` inválido
+  (`abc`), `0` ou negativo, `quantidade` negativa/decimal e `nome` com menos de
+  2 caracteres passam a responder **400** — antes, `preco: 'abc'` virava `NaN`
+  e só falhava (ou gravava lixo) mais adiante. Também remove tags HTML de
+  `nome`/`descricao`.
+- **Efeito colateral a conhecer:** com `whitelist: true` no `ValidationPipe`,
+  campos desconhecidos no body de `POST/PUT /produtos` agora são descartados em
+  silêncio em vez de chegarem ao service.
+
+### Validação desta rodada
+
+`tsc` e `nest build` limpos · 29 suites / 107 testes unitários · 24 testes E2E
+contra SQLite em memória, incluindo: cliente comum recebe 403 ao criar produto;
+admin cria produto por multipart (strings viram números); checkout acima do
+estoque → 400 sem baixar nada; checkout válido baixa o estoque; outro usuário
+não cancela (403); dono cancela e o estoque volta; segundo cancelamento → 400
+sem devolver estoque duas vezes.
+
+---
+
+## Rodada anterior: inversão de dependência (Clean Architecture)
 
 Extraí interfaces (`IUsuarioRepository`, `IAdministradorRepository`,
 `IProdutoRepository`, `ICategoriaRepository`, `IPedidoRepository`) para os

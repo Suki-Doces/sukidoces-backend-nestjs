@@ -19,8 +19,12 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { Usuario } from '../common/decorators/usuario.decorator';
 import { multerOptions } from '../common/upload/multer.config';
-import { AuthService } from '../auth/auth.service';
+import { RegisterUseCase } from '../auth/use-cases/register.use-case';
+import { LoginUseCase } from '../auth/use-cases/login.use-case';
+import { RefreshTokenUseCase } from '../auth/use-cases/refresh-token.use-case';
+import { VerifyEmailUseCase } from '../auth/use-cases/verify-email.use-case';
 import { UsuarioService } from './usuario.service';
+import { CancelarPedidoUseCase } from './use-cases/cancelar-pedido.use-case';
 import { RegisterDto } from '../auth/dto/register.dto';
 import { LoginDto } from '../auth/dto/login.dto';
 import { ChangeSenhaDto } from './dto/change-senha.dto';
@@ -31,7 +35,11 @@ import { RefreshTokenDto } from '../auth/dto/refresh-token.dto';
 @Controller('usuario')
 export class UsuarioController {
   constructor(
-    private readonly authService: AuthService,
+    private readonly registerUseCase: RegisterUseCase,
+    private readonly loginUseCase: LoginUseCase,
+    private readonly refreshTokenUseCase: RefreshTokenUseCase,
+    private readonly verifyEmailUseCase: VerifyEmailUseCase,
+    private readonly cancelarPedidoUseCase: CancelarPedidoUseCase,
     private readonly usuarioService: UsuarioService,
   ) {}
 
@@ -40,7 +48,7 @@ export class UsuarioController {
   @HttpCode(201)
   @ApiOperation({ summary: 'Cria uma nova conta de cliente' })
   registro(@Body() dto: RegisterDto) {
-    return this.authService.register(dto);
+    return this.registerUseCase.execute(dto);
   }
 
   @Throttle({ default: { limit: 5, ttl: 60_000 } })
@@ -48,7 +56,7 @@ export class UsuarioController {
   @HttpCode(200)
   @ApiOperation({ summary: 'Login unificado (cliente ou admin)' })
   login(@Body() dto: LoginDto) {
-    return this.authService.login(dto);
+    return this.loginUseCase.execute(dto);
   }
 
   @Throttle({ default: { limit: 10, ttl: 60_000 } })
@@ -56,13 +64,13 @@ export class UsuarioController {
   @HttpCode(200)
   @ApiOperation({ summary: 'Troca um refresh token válido por um novo par access+refresh' })
   refresh(@Body() dto: RefreshTokenDto) {
-    return this.authService.refresh(dto);
+    return this.refreshTokenUseCase.execute(dto);
   }
 
   @Get('verificar-email')
   @ApiOperation({ summary: 'Confirma o e-mail a partir do token enviado por link' })
   verificarEmail(@Query('token') token: string) {
-    return this.authService.verifyEmail(token);
+    return this.verifyEmailUseCase.execute(token);
   }
 
   @Post('logout')
@@ -114,6 +122,6 @@ export class UsuarioController {
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Cancela um pedido dentro da janela de 2 horas' })
   cancelarPedido(@Usuario('id') usuarioId: number, @Param('id', ParseIntPipe) id: number) {
-    return this.usuarioService.cancelarPedido(usuarioId, id);
+    return this.cancelarPedidoUseCase.execute(usuarioId, id);
   }
 }

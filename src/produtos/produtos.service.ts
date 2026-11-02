@@ -4,19 +4,19 @@ import { Cache } from 'cache-manager';
 import { IProdutoRepository, PRODUTO_REPOSITORY } from '../common/repositories/interfaces/produto-repository.interface';
 import { IPedidoRepository, PEDIDO_REPOSITORY } from '../common/repositories/interfaces/pedido-repository.interface';
 import { ICategoriaRepository, CATEGORIA_REPOSITORY } from '../common/repositories/interfaces/categoria-repository.interface';
-import { CloudinaryService } from '../cloudinary/cloudinary.service';
 import { buildSuccessResponse } from '../common/responses/api-response';
 import { clampPagination } from '../common/utils/pagination.util';
 
 const CATEGORIAS_CACHE_KEY = 'produtos:categorias';
 
+// Criar/atualizar produto viraram Use Cases (./use-cases). Aqui ficaram as
+// consultas do catálogo e a remoção (soft delete).
 @Injectable()
 export class ProdutosService {
   constructor(
     @Inject(PRODUTO_REPOSITORY) private readonly produtoRepository: IProdutoRepository,
     @Inject(PEDIDO_REPOSITORY) private readonly pedidoRepository: IPedidoRepository,
     @Inject(CATEGORIA_REPOSITORY) private readonly categoriaRepository: ICategoriaRepository,
-    private readonly cloudinary: CloudinaryService,
     @Inject(CACHE_MANAGER) private readonly cache: Cache,
   ) {}
 
@@ -41,7 +41,6 @@ export class ProdutosService {
 
     const ids = maisVendidos.map((item) => item.id_produto);
     const produtos = await this.produtoRepository.findAtivosPorIds(ids);
-
     const ordenados = ids.map((id) => produtos.find((p) => p.id_produto === id)).filter(Boolean);
     return buildSuccessResponse('Produtos mais vendidos', ordenados);
   }
@@ -111,53 +110,6 @@ export class ProdutosService {
     }
 
     return buildSuccessResponse('Produto encontrado', produto);
-  }
-
-  async criar(body: any, file?: Express.Multer.File) {
-    const { nome, descricao, preco, quantidade, id_categoria } = body;
-
-    if (!nome || !preco) {
-      throw new BadRequestException('Nome e preço são obrigatórios');
-    }
-
-    const urlDaImagem = file ? await this.cloudinary.uploadProductImage(file.buffer) : null;
-
-    const novoProduto = await this.produtoRepository.create({
-      nome,
-      descricao,
-      preco: parseFloat(preco),
-      quantidade: quantidade ? parseInt(quantidade, 10) : 0,
-      id_categoria: id_categoria ? parseInt(id_categoria, 10) : null,
-      imagem: urlDaImagem,
-    });
-
-    return buildSuccessResponse('Produto adicionado com sucesso', { produto: novoProduto });
-  }
-
-  async atualizar(id: number, body: any, file?: Express.Multer.File) {
-    const { nome, descricao, preco, quantidade, id_categoria } = body;
-
-    if (isNaN(id)) {
-      throw new BadRequestException('ID inválido');
-    }
-
-    const produto = await this.produtoRepository.findByIdRaw(id);
-    if (!produto) {
-      throw new NotFoundException('Produto não encontrado');
-    }
-
-    const novaImagemUrl = file ? await this.cloudinary.uploadProductImage(file.buffer) : undefined;
-
-    const atualizado = await this.produtoRepository.update(id, {
-      ...(nome && { nome }),
-      ...(descricao !== undefined && { descricao }),
-      ...(preco !== undefined && { preco: parseFloat(preco) }),
-      ...(quantidade !== undefined && { quantidade: parseInt(quantidade, 10) }),
-      ...(id_categoria !== undefined && { id_categoria: parseInt(id_categoria, 10) }),
-      ...(novaImagemUrl && { imagem: novaImagemUrl }),
-    });
-
-    return buildSuccessResponse('Produto atualizado com sucesso', { produto: atualizado });
   }
 
   async remover(id: number) {

@@ -1,7 +1,7 @@
 import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
-import { AuthService } from '../auth/auth.service';
+import { LoginUseCase } from '../auth/use-cases/login.use-case';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { AdminGuard } from '../common/guards/admin.guard';
 import { LoginDto } from '../auth/dto/login.dto';
@@ -11,7 +11,7 @@ import { AdminService } from './admin.service';
 @Controller('admin')
 export class AdminController {
   constructor(
-    private readonly authService: AuthService,
+    private readonly loginUseCase: LoginUseCase,
     private readonly adminService: AdminService,
   ) {}
 
@@ -19,7 +19,7 @@ export class AdminController {
   @Post('login')
   @ApiOperation({ summary: 'Login de administrador (mesma lógica unificada de usuario/login)' })
   login(@Body() dto: LoginDto) {
-    return this.authService.login(dto);
+    return this.loginUseCase.execute(dto);
   }
 
   @Get('dashboard')

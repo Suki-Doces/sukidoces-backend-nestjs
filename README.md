@@ -58,7 +58,9 @@ src/
   common/repositories/ — Repository Pattern para as 5 entidades usadas
                           por 3+ módulos (Usuario, Administrador,
                           Produto, Categoria, Pedido)
-  auth/, usuario/, produtos/, carrinho/, pedidos/, categorias/,
+  auth/, usuario/, produtos/, carrinho/, pedidos/ — cada um com use-cases/
+                          (e domain/ em produtos e pedidos)
+  categorias/,
   clientes/, admin/, admin-perfil/, notificacoes/, contato/, chat/
   notifications/  — barramento de eventos (Observer) p/ notificar admin
   webhooks/       — dispara eventos p/ URLs de terceiros (feature flag)

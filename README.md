@@ -14,9 +14,12 @@ histórico completo de mudanças, incluindo a migração de ORM.
 
 ## Configuração
 
+Para testar o projeto inteiro passo a passo, siga o
+[guia de testes](./TESTE-PROJETO.md).
+
 ```bash
-npm install
-cp .env.example .env   # preencha com suas credenciais reais
+npm ci                  # instale as dependências do lockfile
+# configure o .env local com as variáveis obrigatórias descritas abaixo
 
 npm run migration:run   # roda as migrations contra o MySQL configurado em DATABASE_URL
 npm run seed             # opcional — popula dados de exemplo
@@ -72,4 +75,5 @@ src/
 
 A aplicação recusa iniciar sem elas (validação via Joi):
 `DATABASE_URL`, `JWT_SECRET`, `JWT_REFRESH_SECRET`, `CLOUDINARY_CLOUD_NAME`,
-`CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET`. Veja `.env.example`.
+`CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET`. Consulte o `.env` local e o
+[guia de testes](./TESTE-PROJETO.md); não compartilhe credenciais.

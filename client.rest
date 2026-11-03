@@ -1,0 +1,489 @@
+### CONFIGURACAO
+# As variaveis abaixo sao substituidas pelo REST Client do VS Code.
+# Elas NAO sao preenchidas automaticamente pelas respostas da API.
+# Depois do login, copie data.accessToken para @token.
+# Substitua os IDs de exemplo/placeholder pelos IDs retornados pela API.
+@baseUrl = http://localhost:3000
+@apiUrl = {{baseUrl}}/suki-doces
+@token = COLE_O_ACCESS_TOKEN_AQUI
+@produtoId = 1
+@pedidoId = 1
+@itemId = 1
+@categoriaId = 1
+@clienteId = COLE_O_ID_DO_CLIENTE_AQUI
+@contatoId = COLE_O_ID_DO_CONTATO_AQUI
+@webhookId = 1
+@notificacaoId = COLE_O_ID_DA_NOTIFICACAO_AQUI
+
+### Boas-vindas (sem prefixo global)
+GET {{baseUrl}}/
+
+### Health check (sem prefixo global)
+GET {{baseUrl}}/health
+
+### Métricas Prometheus (sem prefixo global)
+GET {{baseUrl}}/metrics
+
+### Documentação Swagger
+GET {{baseUrl}}/docs
+
+### Registrar usuário
+POST {{apiUrl}}/usuario/registro
+Content-Type: application/json
+
+{
+  "nome": "Cliente de Teste",
+  "email": "cliente@example.com",
+  "senha": "senha123",
+  "telefone": "11999999999"
+}
+
+### Login (cliente ou administrador)
+# Copie data.accessToken da resposta para @token acima.
+POST {{apiUrl}}/usuario/login
+Content-Type: application/json
+
+{
+  "email": "cliente@example.com",
+  "senha": "senha123"
+}
+
+### Login de administrador (mesma autenticação unificada)
+POST {{apiUrl}}/admin/login
+Content-Type: application/json
+
+{
+  "email": "admin@example.com",
+  "senha": "senha123"
+}
+
+### Renovar tokens
+POST {{apiUrl}}/usuario/refresh
+Content-Type: application/json
+
+{
+  "refreshToken": "COLE_O_REFRESH_TOKEN_AQUI"
+}
+
+### Verificar e-mail
+GET {{apiUrl}}/usuario/verificar-email?token=COLE_O_TOKEN_DE_VERIFICACAO_AQUI
+
+### Logout
+POST {{apiUrl}}/usuario/logout
+Authorization: Bearer {{token}}
+
+### Consultar meu perfil
+GET {{apiUrl}}/usuario/perfil
+Authorization: Bearer {{token}}
+
+### Atualizar meu perfil (JSON, sem foto)
+PUT {{apiUrl}}/usuario/perfil
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "nome": "Cliente Atualizado",
+  "telefone": "11988887777",
+  "cpf": "52998224725",
+  "enderecos": [],
+  "data_nascimento": "1990-01-15T00:00:00.000Z"
+}
+
+### Atualizar meu perfil com foto
+# Troque ./foto-perfil.jpg por um arquivo existente.
+PUT {{apiUrl}}/usuario/perfil
+Authorization: Bearer {{token}}
+Content-Type: multipart/form-data; boundary=RestClientBoundary
+
+--RestClientBoundary
+Content-Disposition: form-data; name="nome"
+
+Cliente Atualizado
+--RestClientBoundary
+Content-Disposition: form-data; name="foto_perfil"; filename="foto-perfil.jpg"
+Content-Type: image/jpeg
+
+< ./foto-perfil.jpg
+--RestClientBoundary--
+
+### Alterar senha
+PUT {{apiUrl}}/usuario/senha
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "senhaAtual": "senha123",
+  "novaSenha": "senhaNova123"
+}
+
+### Listar meus pedidos
+GET {{apiUrl}}/usuario/pedidos
+Authorization: Bearer {{token}}
+
+### Cancelar pedido (dentro da janela de 2 horas)
+PATCH {{apiUrl}}/usuario/pedidos/{{pedidoId}}/cancelar
+Authorization: Bearer {{token}}
+
+### Listar produtos
+GET {{apiUrl}}/produtos
+
+### Listar produtos com filtros
+GET {{apiUrl}}/produtos?query=brigadeiro&filtro=menor-preco&minPreco=1&maxPreco=20
+
+### Listar categorias públicas de produtos
+GET {{apiUrl}}/produtos/categorias
+
+### Listar produtos mais vendidos
+GET {{apiUrl}}/produtos/mais-vendidos
+
+### Listar produtos novos
+GET {{apiUrl}}/produtos/novos
+
+### Consultar produto por ID
+GET {{apiUrl}}/produtos/{{produtoId}}
+
+### Criar produto (administrador; multipart/form-data)
+# Troque ./produto.jpg por um arquivo existente.
+POST {{apiUrl}}/produtos
+Authorization: Bearer {{token}}
+Content-Type: multipart/form-data; boundary=RestClientBoundary
+
+--RestClientBoundary
+Content-Disposition: form-data; name="nome"
+
+Brigadeiro de Teste
+--RestClientBoundary
+Content-Disposition: form-data; name="descricao"
+
+Brigadeiro artesanal
+--RestClientBoundary
+Content-Disposition: form-data; name="preco"
+
+5.50
+--RestClientBoundary
+Content-Disposition: form-data; name="quantidade"
+
+20
+--RestClientBoundary
+Content-Disposition: form-data; name="id_categoria"
+
+{{categoriaId}}
+--RestClientBoundary
+Content-Disposition: form-data; name="imagem"; filename="produto.jpg"
+Content-Type: image/jpeg
+
+< ./produto.jpg
+--RestClientBoundary--
+
+### Atualizar produto (administrador; multipart/form-data)
+# Troque ./produto.jpg por um arquivo existente. Os campos são opcionais.
+PUT {{apiUrl}}/produtos/{{produtoId}}
+Authorization: Bearer {{token}}
+Content-Type: multipart/form-data; boundary=RestClientBoundary
+
+--RestClientBoundary
+Content-Disposition: form-data; name="nome"
+
+Brigadeiro Atualizado
+--RestClientBoundary
+Content-Disposition: form-data; name="preco"
+
+6.00
+--RestClientBoundary
+Content-Disposition: form-data; name="imagem"; filename="produto.jpg"
+Content-Type: image/jpeg
+
+< ./produto.jpg
+--RestClientBoundary--
+
+### Remover produto (administrador)
+DELETE {{apiUrl}}/produtos/{{produtoId}}
+Authorization: Bearer {{token}}
+
+### Listar categorias (administrador)
+GET {{apiUrl}}/admin/categorias
+Authorization: Bearer {{token}}
+
+### Criar categoria (administrador)
+POST {{apiUrl}}/admin/categorias
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "nome": "Bolos",
+  "descricao": "Bolos artesanais"
+}
+
+### Atualizar categoria (administrador)
+PUT {{apiUrl}}/admin/categorias/{{categoriaId}}
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "nome": "Bolos e tortas",
+  "descricao": "Bolos e tortas artesanais"
+}
+
+### Remover categoria (administrador)
+DELETE {{apiUrl}}/admin/categorias/{{categoriaId}}
+Authorization: Bearer {{token}}
+
+### Listar clientes (administrador)
+GET {{apiUrl}}/admin/clientes
+Authorization: Bearer {{token}}
+
+### Listar clientes com filtros
+GET {{apiUrl}}/admin/clientes?page=1&limit=10
+Authorization: Bearer {{token}}
+
+### Estatísticas de novos clientes (administrador)
+GET {{apiUrl}}/admin/clientes/estatisticas/novos
+Authorization: Bearer {{token}}
+
+### Criar cliente (administrador)
+POST {{apiUrl}}/admin/clientes
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "nome": "Cliente Criado pelo Admin",
+  "email": "novo-cliente@example.com",
+  "senha": "senha123",
+  "status": "ativo"
+}
+
+### Atualizar cliente (administrador)
+PUT {{apiUrl}}/admin/clientes/{{clienteId}}
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "nome": "Cliente Atualizado pelo Admin",
+  "status": "ativo"
+}
+
+### Remover cliente (administrador)
+DELETE {{apiUrl}}/admin/clientes/{{clienteId}}
+Authorization: Bearer {{token}}
+
+### Listar carrinho
+GET {{apiUrl}}/carrinho
+Authorization: Bearer {{token}}
+
+### Adicionar produto ao carrinho
+POST {{apiUrl}}/carrinho/add
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "id_produto": {{produtoId}},
+  "quantidade": 2
+}
+
+### Atualizar quantidade do item do carrinho
+PUT {{apiUrl}}/carrinho/{{itemId}}
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "quantidade": 3
+}
+
+### Remover item do carrinho
+DELETE {{apiUrl}}/carrinho/{{itemId}}
+Authorization: Bearer {{token}}
+
+### Limpar carrinho
+DELETE {{apiUrl}}/carrinho
+Authorization: Bearer {{token}}
+
+### Finalizar compra (checkout)
+POST {{apiUrl}}/pedidos
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "produtos": [
+    {
+      "id_produto": {{produtoId}},
+      "quantidade": 2
+    }
+  ],
+  "metodo_pagamento": "pix",
+  "codigo_cupom": ""
+}
+
+### Listar todos os pedidos (administrador)
+GET {{apiUrl}}/pedidos
+Authorization: Bearer {{token}}
+
+### Pagar pedido novamente
+POST {{apiUrl}}/pedidos/{{pedidoId}}/pagar
+Authorization: Bearer {{token}}
+
+### Atualizar status do pedido (administrador)
+PATCH {{apiUrl}}/pedidos/{{pedidoId}}/status
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "status": "enviado"
+}
+
+### Alias administrativo: listar todos os pedidos
+GET {{apiUrl}}/admin/pedidos
+Authorization: Bearer {{token}}
+
+### Alias administrativo: checkout
+POST {{apiUrl}}/admin/pedidos
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "produtos": [
+    {
+      "id_produto": {{produtoId}},
+      "quantidade": 2
+    }
+  ],
+  "metodo_pagamento": "pix"
+}
+
+### Alias administrativo: pagar pedido novamente
+POST {{apiUrl}}/admin/pedidos/{{pedidoId}}/pagar
+Authorization: Bearer {{token}}
+
+### Alias administrativo: atualizar status do pedido
+PATCH {{apiUrl}}/admin/pedidos/{{pedidoId}}/status
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "status": "enviado"
+}
+
+### Enviar mensagem de contato (autenticação opcional)
+POST {{apiUrl}}/contatos
+Content-Type: application/json
+
+{
+  "nome": "Cliente de Teste",
+  "email": "cliente@example.com",
+  "telefone": "11999999999",
+  "assunto": "Dúvida sobre pedido",
+  "mensagem": "Gostaria de saber mais sobre os produtos disponíveis."
+}
+
+### Consultar meu histórico de contatos
+GET {{apiUrl}}/contatos/me
+Authorization: Bearer {{token}}
+
+### Listar contatos (administrador)
+GET {{apiUrl}}/admin/contatos
+Authorization: Bearer {{token}}
+
+### Responder contato (administrador)
+PUT {{apiUrl}}/admin/contatos/{{contatoId}}/respond
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "resposta": "Olá! Obrigado por entrar em contato."
+}
+
+### Conversar com o assistente
+POST {{apiUrl}}/chat
+Content-Type: application/json
+
+{
+  "message": "Quais doces vocês recomendam?",
+  "history": []
+}
+
+### Consultar perfil do administrador
+GET {{apiUrl}}/admin/configuracoes
+Authorization: Bearer {{token}}
+
+### Atualizar perfil do administrador (JSON, sem foto)
+PUT {{apiUrl}}/admin/configuracoes
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "nome": "Administrador",
+  "email": "admin@example.com"
+}
+
+### Atualizar perfil do administrador com foto
+# Troque ./foto-admin.jpg por um arquivo existente.
+PUT {{apiUrl}}/admin/configuracoes
+Authorization: Bearer {{token}}
+Content-Type: multipart/form-data; boundary=RestClientBoundary
+
+--RestClientBoundary
+Content-Disposition: form-data; name="nome"
+
+Administrador
+--RestClientBoundary
+Content-Disposition: form-data; name="foto_perfil"; filename="foto-admin.jpg"
+Content-Type: image/jpeg
+
+< ./foto-admin.jpg
+--RestClientBoundary--
+
+### Consultar dashboard (administrador)
+GET {{apiUrl}}/admin/dashboard
+Authorization: Bearer {{token}}
+
+### Listar webhooks (administrador; feature flag webhooks habilitada)
+GET {{apiUrl}}/admin/webhooks
+Authorization: Bearer {{token}}
+
+### Criar webhook (administrador; feature flag webhooks habilitada)
+POST {{apiUrl}}/admin/webhooks
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "url": "https://example.com/webhooks/suki-doces",
+  "eventos": [
+    "admin-notification.pedido-criado"
+  ]
+}
+
+### Remover webhook (administrador; feature flag webhooks habilitada)
+DELETE {{apiUrl}}/admin/webhooks/{{webhookId}}
+Authorization: Bearer {{token}}
+
+### Listar feature flags (administrador)
+GET {{apiUrl}}/admin/feature-flags
+Authorization: Bearer {{token}}
+
+### Atualizar feature flag (administrador)
+PUT {{apiUrl}}/admin/feature-flags/webhooks
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "ativo": true
+}
+
+### Listar notificações
+GET {{apiUrl}}/admin/notificacoes
+Authorization: Bearer {{token}}
+
+### Listar notificações com filtros
+GET {{apiUrl}}/admin/notificacoes?page=1&limit=10
+Authorization: Bearer {{token}}
+
+### Marcar notificação como lida
+PUT {{apiUrl}}/admin/notificacoes/{{notificacaoId}}/read
+Authorization: Bearer {{token}}
+
+### Marcar todas as notificações como lidas
+PUT {{apiUrl}}/admin/notificacoes/read-all
+Authorization: Bearer {{token}}
+
+### Remover notificação
+DELETE {{apiUrl}}/admin/notificacoes/{{notificacaoId}}
+Authorization: Bearer {{token}}

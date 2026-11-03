@@ -1,0 +1,487 @@
+GUIA DE USO DO client.rest — API SUKI DOCES
+==========================================
+
+Este guia explica as requisicoes do arquivo client.rest: quando usa-las,
+o que enviar, como obter os IDs e como configurar a autenticacao.
+
+1. PREPARAR E EXECUTAR AS REQUISICOES
+-------------------------------------
+
+1. Configure as variaveis obrigatorias no arquivo .env conforme o
+   .env.example. Nao compartilhe valores secretos do seu .env.
+2. No terminal, na pasta do projeto, instale as dependencias se ainda
+   nao estiverem instaladas:
+
+       npm install
+
+3. Inicie a API:
+
+       npm run start:dev
+
+4. Abra client.rest no VS Code. Instale a extensao "REST Client" (da
+   Huachao Mao) se ainda nao tiver o comando "Send Request".
+5. Cada bloco com ### e uma requisicao independente. Clique em "Send
+   Request" acima da requisicao que quer executar.
+6. A API usa http://localhost:3000 por padrao. Se usar outra porta ou
+   servidor, altere @baseUrl no inicio do client.rest.
+7. As rotas da API usam o prefixo /suki-doces. As excecoes sao /, /health
+   e /metrics. O Swagger abre em http://localhost:3000/docs.
+
+IMPORTANTE: muitas rotas alteram ou removem dados. Teste em ambiente de
+desenvolvimento e use IDs de registros de teste.
+
+2. VARIAVEIS, TOKEN E IDS NO client.rest
+----------------------------------------
+
+No topo do client.rest ha declaracoes como:
+
+    @baseUrl = http://localhost:3000
+    @apiUrl = {{baseUrl}}/suki-doces
+    @token = COLE_O_ACCESS_TOKEN_AQUI
+    @produtoId = 1
+
+O REST Client substitui {{baseUrl}}, {{apiUrl}}, {{token}} e os demais
+nomes pela variavel correspondente antes de enviar a requisicao. Isso
+funciona desde que a variavel tenha um valor correto.
+
+Esses valores NAO sao buscados nem atualizados automaticamente a partir
+das respostas da API neste arquivo. Portanto:
+
+- @token: "COLE_O_ACCESS_TOKEN_AQUI" e apenas um lembrete; nao e um token
+  valido. Faca login, copie o campo data.accessToken da resposta e cole
+  em @token. Exemplo:
+
+      @token = eyJhbGciOi...
+
+  Nao coloque "Bearer " no valor da variavel: as requisicoes protegidas
+  ja enviam "Authorization: Bearer {{token}}".
+
+- @produtoId: o valor 1 e apenas um exemplo. Use o id_produto que aparece
+  na resposta de GET /suki-doces/produtos ou ao criar um produto.
+- @categoriaId: use o ID de uma categoria existente, listado por
+  GET /suki-doces/admin/categorias ou retornado ao criar uma categoria.
+- @pedidoId: use o ID retornado ao finalizar uma compra ou ao consultar
+  os pedidos.
+- @itemId: use o ID do ITEM do carrinho retornado por
+  GET /suki-doces/carrinho. Nao use o ID do produto por engano.
+- @clienteId: substitua "COLE_O_ID_DO_CLIENTE_AQUI" pelo ID do cliente
+  retornado ao criar/listar clientes. O texto placeholder nao e um ID
+  valido e a rota falhara enquanto nao for trocado.
+- @contatoId: substitua "COLE_O_ID_DO_CONTATO_AQUI" pelo ID retornado ao
+  listar contatos no painel administrativo.
+- @webhookId: use o ID retornado ao criar ou listar webhooks.
+- @notificacaoId: substitua "COLE_O_ID_DA_NOTIFICACAO_AQUI" pelo ID de
+  uma notificacao retornada pela listagem de notificacoes da sua conta.
+
+Se uma variavel de ID estiver errada, a URL ainda pode ser enviada, mas
+a API pode responder com erro, nao encontrar o registro ou nao alterar o
+registro pretendido. Copie os IDs das respostas/listagens, nao adivinhe.
+
+Para contas e dados protegidos, use o token da conta correta:
+- Rotas de cliente: token de um usuario autenticado.
+- Rotas marcadas "administrador": token de uma conta administradora.
+- Rotas com autenticacao opcional podem ser chamadas sem token.
+- Notificacoes exigem autenticacao; cada usuario ve as suas proprias.
+
+3. ROTAS GERAIS E AUTENTICACAO
+------------------------------
+
+GET /
+  Verifica a mensagem de boas-vindas. Nao exige token nem corpo.
+
+GET /health
+  Verifica a saude da aplicacao e conexao ao banco. Nao exige token.
+
+GET /metrics
+  Retorna metricas Prometheus em texto. Nao exige token.
+
+GET /docs
+  Abre a documentacao Swagger no navegador. Nao e uma requisicao de
+  negocio; use http://localhost:3000/docs.
+
+POST /suki-doces/usuario/registro
+  Cria conta de cliente. Envie JSON:
+    nome       texto com pelo menos 2 caracteres
+    email      email valido
+    senha      pelo menos 6 caracteres
+    telefone   pelo menos 10 caracteres
+  Exemplo: o corpo ja esta no client.rest. Use um email que ainda nao
+  esteja cadastrado.
+
+POST /suki-doces/usuario/login
+  Login unificado de cliente ou administrador. Envie email e senha.
+  Na resposta, copie data.accessToken para @token e data.refreshToken
+  para usar na renovacao. O caminho /admin/login faz o mesmo login,
+  conforme descrito abaixo.
+
+POST /suki-doces/admin/login
+  Login usando email e senha do administrador. O formato do corpo e o
+  mesmo de /usuario/login. Use esse login para operar rotas de admin.
+
+POST /suki-doces/usuario/refresh
+  Renova o par de tokens. Envie JSON:
+    refreshToken  o refresh token recebido no login
+  Copie o novo data.accessToken para @token. O refresh token tambem deve
+  ser atualizado a partir da resposta.
+
+GET /suki-doces/usuario/verificar-email?token=...
+  Confirma o email. Troque o valor de token pelo token completo recebido
+  no link de verificacao enviado ao usuario. Nao requer access token.
+
+POST /suki-doces/usuario/logout
+  Envia o token atual no cabecalho. Nao recebe corpo. A implementacao
+  atual responde com confirmacao; ela nao revoga o token no servidor.
+
+4. CONTA, PERFIL E PEDIDOS DO USUARIO
+-------------------------------------
+
+GET /suki-doces/usuario/perfil
+  Retorna o perfil da conta associada a @token. Sem corpo.
+
+PUT /suki-doces/usuario/perfil
+  Atualiza o perfil do usuario autenticado. JSON aceita campos opcionais:
+    nome             nome do usuario
+    telefone         telefone
+    cpf              CPF valido
+    enderecos        dados de endereco
+    data_nascimento  data em formato ISO, por exemplo
+                     "1990-01-15T00:00:00.000Z"
+  Envie apenas os campos que deseja alterar. Nao envie campos de
+  exemplo sem conferir se sao os seus dados.
+
+PUT /suki-doces/usuario/perfil (multipart com foto)
+  Mesmo endpoint, para atualizar dados e enviar foto. O campo do arquivo
+  precisa se chamar foto_perfil. No client.rest, altere
+  "./foto-perfil.jpg" para um arquivo real. O caminho do arquivo e
+  relativo ao projeto/arquivo conforme o REST Client conseguir resolve-lo.
+  Se nao precisar enviar foto, use a requisicao JSON anterior.
+
+PUT /suki-doces/usuario/senha
+  Altera a senha da conta autenticada. Envie JSON:
+    senhaAtual  senha atual
+    novaSenha   nova senha
+  Use uma senha nova com pelo menos 6 caracteres.
+
+GET /suki-doces/usuario/pedidos
+  Lista os pedidos da conta autenticada. Sem corpo.
+
+PATCH /suki-doces/usuario/pedidos/{id}/cancelar
+  Solicita cancelamento do pedido. Troque {id}, por meio de @pedidoId,
+  pelo ID de um pedido seu. O cancelamento esta sujeito a janela de
+  duas horas e as regras do pedido.
+
+5. PRODUTOS E CATEGORIAS
+------------------------
+
+GET /suki-doces/produtos
+  Lista produtos publicos. Sem corpo.
+
+GET /suki-doces/produtos?query=...&filtro=...&minPreco=...&maxPreco=...
+  Filtra o catalogo. Parametros opcionais:
+    query     trecho do nome do produto (ex.: brigadeiro)
+    categoria ID da categoria
+    filtro    novos, menor-preco ou maior-preco
+    minPreco  preco minimo
+    maxPreco  preco maximo
+  As opcoes precisam ser separadas por &. A API publica nao usa
+  paginacao neste endpoint; page/limit sao considerados para a listagem
+  administrativa quando isAdmin e informado conforme implementacao.
+
+GET /suki-doces/produtos/categorias
+  Lista categorias disponibilizadas no catalogo publico. Sem corpo.
+
+GET /suki-doces/produtos/mais-vendidos
+  Retorna produtos mais vendidos ou produtos em destaque como alternativa.
+  Sem corpo.
+
+GET /suki-doces/produtos/novos
+  Retorna produtos recentes. Sem corpo.
+
+GET /suki-doces/produtos/{id}
+  Consulta um produto pelo ID. Atualize @produtoId com um id_produto
+  existente.
+
+POST /suki-doces/produtos  [ADMINISTRADOR]
+  Cria produto usando multipart/form-data. Campos:
+    nome         obrigatorio, texto com pelo menos 2 caracteres
+    descricao    opcional, texto
+    preco        obrigatorio, numero maior que zero
+    quantidade   opcional, inteiro maior ou igual a zero
+    id_categoria opcional, ID inteiro de categoria
+    imagem       arquivo opcional no exemplo; se enviar, campo da imagem
+                 deve se chamar exatamente "imagem"
+  No exemplo, substitua produto.jpg por um arquivo existente. O token
+  deve pertencer a administrador.
+
+PUT /suki-doces/produtos/{id}  [ADMINISTRADOR]
+  Atualiza o produto indicado por @produtoId. Use multipart/form-data;
+  os campos sao opcionais e seguem os mesmos nomes do POST. Para enviar
+  nova imagem, use o campo imagem e indique um arquivo existente.
+
+DELETE /suki-doces/produtos/{id}  [ADMINISTRADOR]
+  Remove o produto indicado por @produtoId do catalogo. Use um ID
+  existente e confira antes de executar.
+
+GET /suki-doces/admin/categorias  [ADMINISTRADOR]
+  Lista categorias para administracao. Sem corpo.
+
+POST /suki-doces/admin/categorias  [ADMINISTRADOR]
+  Cria categoria. JSON:
+    nome      obrigatorio, texto
+    descricao opcional, texto
+  Copie o ID da categoria criada para @categoriaId.
+
+PUT /suki-doces/admin/categorias/{id}  [ADMINISTRADOR]
+  Atualiza a categoria @categoriaId. Envie nome e/ou descricao em JSON.
+
+DELETE /suki-doces/admin/categorias/{id}  [ADMINISTRADOR]
+  Remove a categoria @categoriaId. Confira se nao esta sendo usada por
+  produtos antes de executar.
+
+6. CLIENTES (ADMINISTRADOR)
+---------------------------
+
+Todas as rotas desta secao precisam de token de administrador.
+
+GET /suki-doces/admin/clientes
+  Lista clientes. Sem corpo.
+
+GET /suki-doces/admin/clientes?page=1&limit=10
+  Lista clientes com paginacao:
+    page   numero da pagina, iniciando em 1
+    limit  quantidade de resultados por pagina
+
+GET /suki-doces/admin/clientes/estatisticas/novos
+  Retorna a estatistica de novos clientes. Sem corpo.
+
+POST /suki-doces/admin/clientes
+  Cria cliente pelo painel. JSON:
+    nome   nome com pelo menos 2 caracteres
+    email  email valido
+    senha  pelo menos 6 caracteres
+    status opcional: "ativo" ou "inativo"
+  Copie o ID retornado para @clienteId.
+
+PUT /suki-doces/admin/clientes/{id}
+  Atualiza o cliente indicado por @clienteId. JSON aceita:
+    nome   novo nome
+    status "ativo" ou "inativo"
+    senha  nova senha (pelo menos 6 caracteres)
+  Envie pelo menos o campo que deseja alterar.
+
+DELETE /suki-doces/admin/clientes/{id}
+  Remove o cliente indicado por @clienteId. Confira o ID antes de enviar.
+
+7. CARRINHO
+-----------
+
+Todas as rotas do carrinho precisam de token de usuario autenticado.
+
+GET /suki-doces/carrinho
+  Consulta os itens do seu carrinho. Use a resposta para obter o ID do
+  item, que e diferente do ID do produto.
+
+POST /suki-doces/carrinho/add
+  Adiciona produto ao carrinho. JSON:
+    id_produto opcional no DTO, mas informe o ID real do produto
+    produto_id opcional como nome alternativo aceito pelo DTO
+    quantidade obrigatoria, inteiro positivo
+  Informe somente um dos dois nomes de ID, preferencialmente id_produto.
+
+PUT /suki-doces/carrinho/{itemId}
+  Atualiza a quantidade. Troque @itemId pelo ID do item retornado por
+  GET /carrinho, nao por @produtoId. JSON:
+    quantidade  inteiro positivo
+
+DELETE /suki-doces/carrinho/{itemId}
+  Remove o item indicado por @itemId do seu carrinho.
+
+DELETE /suki-doces/carrinho
+  Limpa todos os itens do seu carrinho. Nao envia corpo.
+
+8. PEDIDOS
+----------
+
+POST /suki-doces/pedidos
+  Finaliza checkout para o usuario autenticado. JSON:
+    produtos          lista de produtos, cada um com id_produto e quantidade
+    metodo_pagamento  texto obrigatorio, por exemplo "pix", "cartao"
+                      ou "boleto"
+    codigo_cupom      opcional
+  Use IDs de produto existentes e quantidades disponiveis. Copie o ID do
+  pedido retornado para @pedidoId. No codigo atual, pix e cartao marcam
+  o pedido como pago; outros metodos podem deixa-lo pendente.
+
+GET /suki-doces/pedidos  [ADMINISTRADOR]
+  Lista todos os pedidos. Apesar do caminho generico, o controller exige
+  AdminGuard nesta rota.
+
+POST /suki-doces/pedidos/{id}/pagar
+  Tenta pagar novamente o pedido indicado por @pedidoId. Requer token
+  autenticado e regras do pedido podem impedir a operacao.
+
+PATCH /suki-doces/pedidos/{id}/status  [ADMINISTRADOR]
+  Atualiza o status do pedido. JSON:
+    status  um dos valores definidos: pendente, pago, enviado,
+            entregue ou cancelado
+  Exemplo do client.rest usa "enviado".
+
+ALIAS /suki-doces/admin/pedidos
+  O controller aceita tambem prefixo /admin/pedidos. O client.rest
+  contem exemplos para:
+    GET   /admin/pedidos                lista todos; exige administrador
+    POST  /admin/pedidos                checkout; exige usuario autenticado
+    POST  /admin/pedidos/{id}/pagar     pagar novamente
+    PATCH /admin/pedidos/{id}/status    atualizar status; exige admin
+  O prefixo "admin" nao altera a protecao de cada metodo: o POST de
+  checkout ainda e uma operacao do usuario autenticado.
+
+9. CONTATOS E CHAT
+------------------
+
+POST /suki-doces/contatos
+  Envia uma mensagem de contato. Autenticacao e opcional. JSON:
+    nome      texto com pelo menos 3 caracteres
+    email     email valido
+    telefone  texto com pelo menos 8 caracteres
+    assunto   texto
+    mensagem  texto com pelo menos 10 caracteres
+
+GET /suki-doces/contatos/me
+  Consulta seu historico de contato. Requer token de usuario.
+
+GET /suki-doces/admin/contatos  [ADMINISTRADOR]
+  Lista mensagens recebidas no painel.
+
+PUT /suki-doces/admin/contatos/{id}/respond  [ADMINISTRADOR]
+  Responde ao contato indicado por @contatoId. JSON:
+    resposta  texto com pelo menos 5 caracteres
+  Para obter contatoId, execute primeiro a listagem administrativa e
+  copie o ID da mensagem correspondente.
+
+POST /suki-doces/chat
+  Envia mensagem ao assistente. Nao requer token no controller. JSON:
+    message  texto da mensagem
+    history opcional, array com historico no formato esperado pelo chat
+  O exemplo usa history vazio.
+
+10. PERFIL E PAINEL ADMINISTRATIVO
+----------------------------------
+
+Todas as rotas desta secao precisam de token de administrador.
+
+GET /suki-doces/admin/configuracoes
+  Consulta o perfil do administrador autenticado. Sem corpo.
+
+PUT /suki-doces/admin/configuracoes (JSON)
+  Atualiza dados do administrador. Campos opcionais:
+    nome       novo nome
+    email      novo email valido
+    senhaAtual senha atual, quando necessaria para alteracao de senha
+    novaSenha  nova senha, pelo menos 6 caracteres
+
+PUT /suki-doces/admin/configuracoes (multipart com foto)
+  Envia foto de perfil usando o campo foto_perfil. No exemplo,
+  substitua ./foto-admin.jpg por um arquivo existente. Campos de texto
+  opcionais podem ser enviados junto.
+
+GET /suki-doces/admin/dashboard
+  Consulta metricas e resumo de vendas. Sem corpo.
+
+11. WEBHOOKS E FEATURE FLAGS
+----------------------------
+
+As rotas de webhook exigem token de administrador e a feature flag
+"webhooks" habilitada. Caso contrario, a API pode bloquear a requisicao.
+
+GET /suki-doces/admin/webhooks  [ADMINISTRADOR]
+  Lista webhooks cadastrados. Use a resposta para obter @webhookId.
+
+POST /suki-doces/admin/webhooks  [ADMINISTRADOR]
+  Cria webhook. JSON:
+    url      URL valida que recebera notificacoes
+    eventos  lista nao vazia de eventos validos
+  Eventos disponiveis:
+    admin-notification.usuario-registrado
+    admin-notification.pedido-criado
+    admin-notification.pedido-pago
+    admin-notification.pedido-status-atualizado
+    admin-notification.pedido-cancelado
+  Use uma URL de endpoint que voce controla; o exemplo example.com e
+  apenas ilustrativo e nao recebe eventos da sua aplicacao.
+
+DELETE /suki-doces/admin/webhooks/{id}  [ADMINISTRADOR]
+  Remove o webhook indicado por @webhookId.
+
+GET /suki-doces/admin/feature-flags  [ADMINISTRADOR]
+  Lista as feature flags.
+
+PUT /suki-doces/admin/feature-flags/{chave}  [ADMINISTRADOR]
+  Altera a flag indicada no caminho, por exemplo "webhooks". JSON:
+    ativo  true para habilitar, false para desabilitar
+
+12. NOTIFICACOES
+----------------
+
+As rotas usam token autenticado. A listagem e as alteracoes sao limitadas
+as notificacoes pertencentes ao usuario do token.
+
+GET /suki-doces/admin/notificacoes
+  Lista notificacoes do usuario autenticado.
+
+GET /suki-doces/admin/notificacoes?page=1&limit=10
+  Mesmo endpoint com paginacao. page inicia em 1; limit e a quantidade
+  solicitada por pagina.
+
+PUT /suki-doces/admin/notificacoes/{id}/read
+  Marca como lida a notificacao identificada por @notificacaoId. Copie o
+  ID da resposta da listagem.
+
+PUT /suki-doces/admin/notificacoes/read-all
+  Marca todas as notificacoes do usuario autenticado como lidas. Sem corpo.
+
+DELETE /suki-doces/admin/notificacoes/{id}
+  Apaga a notificacao identificada por @notificacaoId, se ela pertencer
+  ao usuario do token.
+
+13. ERROS COMUNS
+----------------
+
+401 Unauthorized:
+  Token ausente, expirado ou invalido. Faca login e substitua @token por
+  data.accessToken, nao por refreshToken.
+
+403 Forbidden:
+  A conta autenticada nao tem permissao para a rota, ou o registro nao
+  pertence ao usuario. Para rotas administrativas, use token de admin.
+
+400 Bad Request:
+  Confira os nomes e tipos dos campos. JSON deve estar entre chaves e
+  Content-Type deve ser application/json. IDs numericos precisam conter
+  numeros; quantidades devem ser positivas.
+
+404 Not Found:
+  Confira se o ID existe e se o caminho inclui /suki-doces. Para itemId,
+  contatoId e notificacaoId, copie o ID do registro correspondente.
+
+Erro ao enviar arquivo:
+  Confira se o arquivo existe no caminho indicado no client.rest, se o
+  campo multipart tem o nome correto (imagem ou foto_perfil) e se nao
+  esta enviando o formulario como application/json.
+
+RESUMO DOS PLACEHOLDERS
+-----------------------
+
+@token          data.accessToken retornado pelo login/refresh
+@produtoId      ID de produto existente
+@pedidoId       ID de pedido retornado pelo checkout/listagem
+@itemId         ID do item do carrinho, nao o ID do produto
+@categoriaId    ID de categoria existente
+@clienteId      ID de cliente existente
+@contatoId      ID da mensagem de contato
+@webhookId      ID de webhook criado/listado
+@notificacaoId  ID de notificacao do usuario autenticado
+
+Os textos COLE_O_... e o numero 1 sao exemplos para substituicao. O REST
+Client faz a substituicao textual, mas nao descobre os IDs nem captura o
+token das respostas automaticamente.

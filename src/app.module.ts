@@ -1,81 +1,57 @@
 import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { APP_FILTER, APP_GUARD } from '@nestjs/core';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
-import { APP_FILTER, APP_GUARD } from '@nestjs/core';
-import { AppController } from './app.controller';
-import { envValidationSchema } from './config/env.validation';
-import { DatabaseModule } from './database/database.module';
-import { CloudinaryModule } from './cloudinary/cloudinary.module';
-import { AppCacheModule } from './common/cache/app-cache.module';
-import { RepositoriesModule } from './common/repositories/repositories.module';
-import { AllExceptionsFilter } from './common/filters/http-exception.filter';
-import { NotificationsModule } from './notifications/notifications.module';
-import { HealthModule } from './health/health.module';
-import { MetricsModule } from './metrics/metrics.module';
-import { MetricsMiddleware } from './metrics/metrics.middleware';
-import { WebhooksModule } from './webhooks/webhooks.module';
-import { FeatureFlagsModule } from './feature-flags/feature-flags.module';
-import { EmailModule } from './email/email.module';
-import { AuthModule } from './auth/auth.module';
-import { UsuarioModule } from './usuario/usuario.module';
-import { ProdutosModule } from './produtos/produtos.module';
-import { CarrinhoModule } from './carrinho/carrinho.module';
-import { CategoriasModule } from './categorias/categorias.module';
-import { ChatModule } from './chat/chat.module';
-import { PedidosModule } from './pedidos/pedidos.module';
-import { AdminModule } from './admin/admin.module';
-import { AdminPerfilModule } from './admin-perfil/admin-perfil.module';
-import { ClientesModule } from './clientes/clientes.module';
-import { NotificacoesModule } from './notificacoes/notificacoes.module';
-import { ContatoModule } from './contato/contato.module';
-import { LoggerMiddleware } from './common/middleware/logger.middleware';
+import { envValidationSchema } from './infrastructure/config/env.validation';
+import { InfrastructureModule } from './infrastructure/infrastructure.module';
+import { DatabaseModule } from './infrastructure/persistence/database.module';
+import { AppController } from './presentation/http/controllers/app.controller';
+import { AllExceptionsFilter } from './presentation/http/filters/all-exceptions.filter';
+import { LoggerMiddleware } from './presentation/http/middleware/logger.middleware';
+import { MetricsMiddleware } from './presentation/http/middleware/metrics.middleware';
+import { AdminModule } from './presentation/http/modules/admin.module';
+import { CartModule } from './presentation/http/modules/cart.module';
+import { CatalogModule } from './presentation/http/modules/catalog.module';
+import { ChatModule } from './presentation/http/modules/chat.module';
+import { ContactsModule } from './presentation/http/modules/contacts.module';
+import { CustomersModule } from './presentation/http/modules/customers.module';
+import { FeatureFlagsModule } from './presentation/http/modules/feature-flags.module';
+import { HealthModule } from './presentation/http/modules/health.module';
+import { MetricsModule } from './presentation/http/modules/metrics.module';
+import { NotificationsModule } from './presentation/http/modules/notifications.module';
+import { OrdersModule } from './presentation/http/modules/orders.module';
+import { UsersModule } from './presentation/http/modules/users.module';
+import { WebhooksModule } from './presentation/http/modules/webhooks.module';
 
 @Module({
   imports: [
-    ConfigModule.forRoot({
-      isGlobal: true,
-      validationSchema: envValidationSchema,
-      validationOptions: { abortEarly: false },
-    }),
-
+    ConfigModule.forRoot({ isGlobal: true, validationSchema: envValidationSchema, validationOptions: { abortEarly: false } }),
     EventEmitterModule.forRoot(),
-
     ThrottlerModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: (config: ConfigService) => [
-        {
-          name: 'default',
-          ttl: config.get<number>('THROTTLE_TTL_MS') ?? 60_000,
-          limit: config.get<number>('THROTTLE_LIMIT') ?? 100,
-        },
+        { name: 'default', ttl: config.get<number>('THROTTLE_TTL_MS') ?? 60_000, limit: config.get<number>('THROTTLE_LIMIT') ?? 100 },
       ],
     }),
 
+    // Outer layers: persistence/adapters (infrastructure) and HTTP feature modules (presentation).
     DatabaseModule,
-    CloudinaryModule,
-    AppCacheModule,
-    RepositoriesModule,
+    InfrastructureModule,
+    UsersModule,
+    AdminModule,
+    CatalogModule,
+    CartModule,
+    OrdersModule,
+    CustomersModule,
     NotificationsModule,
-    HealthModule,
-    MetricsModule,
+    ContactsModule,
+    ChatModule,
     FeatureFlagsModule,
     WebhooksModule,
-    EmailModule,
-
-    AuthModule,
-    UsuarioModule,
-    ProdutosModule,
-    CarrinhoModule,
-    CategoriasModule,
-    ChatModule,
-    PedidosModule,
-    AdminModule,
-    AdminPerfilModule,
-    ClientesModule,
-    NotificacoesModule,
-    ContatoModule,
+    HealthModule,
+    MetricsModule,
   ],
   controllers: [AppController],
   providers: [

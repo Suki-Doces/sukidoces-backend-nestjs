@@ -106,7 +106,8 @@ POST /suki-doces/usuario/registro
     senha      pelo menos 6 caracteres
     telefone   pelo menos 10 caracteres
   Exemplo: o corpo ja esta no client.rest. Use um email que ainda nao
-  esteja cadastrado.
+  esteja cadastrado. A conta precisa confirmar o email antes de conseguir
+  fazer login ou acessar rotas protegidas.
 
 POST /suki-doces/usuario/login
   Login unificado de cliente ou administrador. Envie email e senha.
@@ -129,8 +130,9 @@ GET /suki-doces/usuario/verificar-email?token=...
   no link de verificacao enviado ao usuario. Nao requer access token.
 
 POST /suki-doces/usuario/logout
-  Envia o token atual no cabecalho. Nao recebe corpo. A implementacao
-  atual responde com confirmacao; ela nao revoga o token no servidor.
+  Envia o access token no cabecalho e o refreshToken atual no corpo JSON.
+  O refresh token e revogado; o access token atual continua valido ate
+  expirar (15 minutos).
 
 4. CONTA, PERFIL E PEDIDOS DO USUARIO
 -------------------------------------
@@ -303,14 +305,17 @@ DELETE /suki-doces/carrinho
 ----------
 
 POST /suki-doces/pedidos
-  Finaliza checkout para o usuario autenticado. JSON:
+  Finaliza checkout para o usuario autenticado. Envie o cabecalho
+  Idempotency-Key com uma chave unica por compra, alem do JSON:
     produtos          lista de produtos, cada um com id_produto e quantidade
     metodo_pagamento  texto obrigatorio, por exemplo "pix", "cartao"
                       ou "boleto"
     codigo_cupom      opcional
   Use IDs de produto existentes e quantidades disponiveis. Copie o ID do
-  pedido retornado para @pedidoId. No codigo atual, pix e cartao marcam
-  o pedido como pago; outros metodos podem deixa-lo pendente.
+  pedido retornado para @pedidoId. Em uma repeticao da mesma requisicao,
+  reutilize a mesma chave e o mesmo corpo para receber o pedido original;
+  uma nova compra deve usar outra chave. No codigo atual, pix e cartao
+  marcam o pedido como pago; outros metodos podem deixa-lo pendente.
 
 GET /suki-doces/pedidos  [ADMINISTRADOR]
   Lista todos os pedidos. Apesar do caminho generico, o controller exige

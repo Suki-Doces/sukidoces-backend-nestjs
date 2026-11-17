@@ -6,6 +6,7 @@
 @baseUrl = http://localhost:3000
 @apiUrl = {{baseUrl}}/suki-doces
 @token = COLE_O_ACCESS_TOKEN_AQUI
+@refreshToken = COLE_O_REFRESH_TOKEN_AQUI
 @produtoId = 1
 @pedidoId = 1
 @itemId = 1
@@ -28,6 +29,7 @@ GET {{baseUrl}}/metrics
 GET {{baseUrl}}/docs
 
 ### Registrar usuário
+# Confirme o e-mail antes de usar as rotas protegidas.
 POST {{apiUrl}}/usuario/registro
 Content-Type: application/json
 
@@ -39,7 +41,7 @@ Content-Type: application/json
 }
 
 ### Login (cliente ou administrador)
-# Copie data.accessToken da resposta para @token acima.
+# Copie data.accessToken para @token e data.refreshToken para @refreshToken.
 POST {{apiUrl}}/usuario/login
 Content-Type: application/json
 
@@ -58,11 +60,12 @@ Content-Type: application/json
 }
 
 ### Renovar tokens
+# Atualize @token e @refreshToken com os valores retornados; refresh tokens são de uso único.
 POST {{apiUrl}}/usuario/refresh
 Content-Type: application/json
 
 {
-  "refreshToken": "COLE_O_REFRESH_TOKEN_AQUI"
+  "refreshToken": "{{refreshToken}}"
 }
 
 ### Verificar e-mail
@@ -71,6 +74,11 @@ GET {{apiUrl}}/usuario/verificar-email?token=COLE_O_TOKEN_DE_VERIFICACAO_AQUI
 ### Logout
 POST {{apiUrl}}/usuario/logout
 Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "refreshToken": "{{refreshToken}}"
+}
 
 ### Consultar meu perfil
 GET {{apiUrl}}/usuario/perfil
@@ -300,6 +308,7 @@ Authorization: Bearer {{token}}
 ### Finalizar compra (checkout)
 POST {{apiUrl}}/pedidos
 Authorization: Bearer {{token}}
+Idempotency-Key: checkout-client-example-001
 Content-Type: application/json
 
 {
@@ -337,6 +346,7 @@ Authorization: Bearer {{token}}
 ### Alias administrativo: checkout
 POST {{apiUrl}}/admin/pedidos
 Authorization: Bearer {{token}}
+Idempotency-Key: checkout-admin-example-001
 Content-Type: application/json
 
 {

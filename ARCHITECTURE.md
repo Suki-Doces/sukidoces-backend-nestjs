@@ -1,173 +1,100 @@
-# Arquitetura — Suki Doces API (NestJS + TypeORM)
+# Architecture
 
-## Camadas
+The API follows **Clean Architecture**: business rules sit in the middle and know nothing about NestJS, TypeORM, HTTP, bcrypt, JWT or any other detail. Details depend on the rules, never the other way round.
 
 ```
-Request → Middleware → Guards → Pipes (DTO) → Controller
-                                                 ↓
-                                  Use Case  (uma classe por ação de negócio)
-                                   ↓                    ↓
-                       Domínio (Pedido, Produto)   Repository (interface) → TypeORM → MySQL
-                       regras puras, sem framework          ↑ implementado em RepositoriesModule
-                                   ↓
-                         EventEmitter2 (eventos de domínio)
-                                   ↓
-                 AdminNotificationListener / WebhookDispatcherListener
+            presentation  (HTTP: controllers, DTOs, presenters, guards, filter)
+                 |  depends on
+                 v
+            application   (use cases + ports)   <---- implemented by ----  infrastructure
+                 |  depends on                                              (TypeORM, bcrypt, JWT,
+                 v                                                           Cloudinary, SMTP, Gemini...)
+              domain      (entities, rules, repository contracts, events)
 ```
 
-- **Controller**: só roteamento HTTP, extração de DTO, delegação.
-- **Service**: regra de negócio. Depende de **interfaces**
-  (`IUsuarioRepository`, `IPedidoRepository`, etc.), nunca das classes
-  concretas — ver seção "Inversão de dependência" abaixo.
-- **Repository** (`src/common/repositories/`): encapsula acesso via
-  `@InjectRepository(Entity)` + `Repository<Entity>` do TypeORM, para as 5
-  entidades usadas por 3+ services (`Usuario`, `Administrador`, `Produto`,
-  `Categoria`, `Pedido`). Entidades de consumidor único
-  (`CarrinhoItem`, `Notificacao`, `ContatoMensagem`, `Webhook`,
-  `FeatureFlag`) são injetadas diretamente no service que as usa —
-  `Repository<Entity>` do TypeORM já É o Repository Pattern; um wrapper
-  customizado ali só duplicaria a API sem lógica de domínio própria.
-- **TypeORM**: `DatabaseModule` registra uma única conexão
-  (`TypeOrmModule.forRootAsync`), `synchronize: false` sempre — mudanças
-  de schema passam por migration explícita.
+## The dependency rule (and how it is enforced)
 
-## Inversão de dependência (Clean Architecture)
+| Layer | May import | Must never import |
+|---|---|---|
+| `domain` | itself only (no packages at all) | everything else |
+| `application` | `domain`, itself, `@nestjs/common` (only for `@Injectable`) | infrastructure, presentation, any other package |
+| `infrastructure` | `domain`, `application` | presentation |
+| `presentation` | `domain`, `application` | infrastructure |
 
-As 5 entidades compartilhadas têm uma **porta** (`src/common/repositories/interfaces/`)
-— uma interface TypeScript (`IUsuarioRepository`, `IProdutoRepository` etc.)
-que descreve O QUE o repositório faz, sem dizer COMO. Todo service que
-precisa de dados desses tipos injeta a interface, nunca a classe:
+`npm run check:architecture` scans every import and fails when one of these rules is broken (it runs in CI). `app.module.ts` is the composition root and is the one place that may see all layers.
 
-```ts
-// auth.service.ts — depende da abstração, não da implementação
-constructor(
-  @Inject(USUARIO_REPOSITORY) private readonly usuarioRepository: IUsuarioRepository,
-) {}
-```
+**Honest compromise:** use cases carry NestJS's `@Injectable()` so the framework can build them. That is the only framework symbol in `application`, and it does not tie the logic to any implementation detail. A stricter variant would register use cases through factories in the composition root.
 
-`RepositoriesModule` é o único lugar do projeto que conhece a
-implementação concreta (TypeORM) por trás de cada porta:
+## Domain
 
-```ts
-{ provide: USUARIO_REPOSITORY, useClass: UsuarioRepository }
-```
+Plain TypeScript classes, no decorators.
 
-Como o TypeScript apaga interfaces em tempo de execução, o "encaixe"
-entre pedir a interface e receber a implementação certa depende de um
-token de DI — aqui, um `Symbol` (`USUARIO_REPOSITORY`), exportado junto
-com a interface no mesmo arquivo. Trocar a implementação (outro ORM, uma
-API externa, um mock fixo) significa escrever uma nova classe que
-implementa a mesma interface e trocar essa uma linha no módulo — nenhum
-service muda.
+- **Entities with behaviour:** `Order` (`place`, `cancel` with the 2-hour window, `markAsPaid`, `ensureBelongsTo`), `Product` (`hasEnoughStock`, `decreaseStock`, `subtotalFor`), `Coupon` (`isApplicable`, `discountFor`), `User`/`Admin` (`toProfile` — a password hash can never leak, even through `JSON.stringify`), `ContactMessage.respond`, `Webhook.subscribesTo`, `CartItem.belongsTo`.
+- **Domain errors** (`InsufficientStockError`, `CancellationWindowExpiredError`, ...). The domain never throws HTTP errors.
+- **Domain events** (`OrderCreatedEvent`, ...).
+- **Repository contracts:** abstract classes (`UserRepository`, `OrderRepository`, ...). An abstract class is both the interface and the injection token, so no `@Inject(SYMBOL)` boilerplate is needed.
+- **Health model:** `buildHealthReport` decides what "healthy" means (every probe up).
 
-Escopo desta inversão: só as 5 entidades compartilhadas (onde o ganho de
-testabilidade/desacoplamento é real, por serem consumidas por múltiplos
-módulos). Entidades de consumidor único continuam com `Repository<Entity>`
-do TypeORM injetado direto — colocar uma interface ali seria abstração sem
-propósito, já que só existe uma implementação possível e um único
-consumidor.
+## Application
 
-## Use Cases (um por ação de negócio)
+One class per business action, each with a single `execute()` method, grouped by area (`auth`, `users`, `products`, `categories`, `cart`, `orders`, `customers`, `admin`, `notifications`, `contacts`, `chat`, `webhooks`, `feature-flags`, `health`).
 
-Operações com regra de negócio multi-etapa viraram uma classe com um único
-método `execute()`, e o controller chama o Use Case direto:
+Use cases receive plain inputs and return plain data or domain entities. They know nothing about HTTP: they throw `ApplicationError`s (`NotFoundError`, `BadRequestError`, ...) or the domain's errors.
 
-| Módulo | Use Cases |
+**Ports** (`application/ports`) describe everything outside the business logic:
+
+| Port | Adapter (infrastructure) |
 |---|---|
-| `auth/use-cases` | `RegisterUseCase`, `LoginUseCase`, `RefreshTokenUseCase`, `VerifyEmailUseCase` |
-| `pedidos/use-cases` | `CheckoutUseCase`, `PagarNovamenteUseCase`, `AtualizarStatusUseCase` |
-| `usuario/use-cases` | `CancelarPedidoUseCase` |
-| `carrinho/use-cases` | `AdicionarAoCarrinhoUseCase` |
-| `produtos/use-cases` | `CriarProdutoUseCase`, `AtualizarProdutoUseCase` |
+| `PasswordHasher` | `BcryptPasswordHasher` |
+| `TokenService` | `JwtTokenService` (separate secrets for access and refresh tokens) |
+| `ImageStorage` | `CloudinaryImageStorage` |
+| `EmailSender` | `SmtpEmailSender` (only logs when SMTP is not configured) |
+| `ChatAssistant` | `GeminiChatAssistant` |
+| `EventPublisher` | `EventEmitterPublisher` |
+| `CacheStore` | `CacheManagerStore` (in memory; Redis is a configuration change) |
+| `WebhookClient` | `FetchWebhookClient` |
+| `ErrorReporter` | `SentryErrorReporter` (inert without `SENTRY_DSN`) |
+| `AppLogger` | `NestAppLogger` |
+| `Metrics` | `PrometheusMetrics` |
+| `UnitOfWork` | `TypeOrmUnitOfWork` |
+| `HealthProbe[]` | `DatabaseHealthProbe`, `MemoryHealthProbe` |
 
-O que **não** virou Use Case, de propósito: leituras e CRUD simples sem regra
-de negócio (listar categorias, ver perfil, listar clientes...). Esses
-continuam em Services — embrulhar um `repo.find()` numa classe
-`ListarCategoriasUseCase` seria cerimônia sem ganho. O critério foi "tem
-regra a isolar e testar?", não "é uma operação?".
+All bindings live in `infrastructure/infrastructure.module.ts` (and `persistence.module.ts` for the repositories).
 
-`AuthService` deixou de existir: seus 4 métodos viraram os 4 Use Cases acima,
-e a emissão do par de tokens (compartilhada) ficou em `TokenIssuerService`.
+## Infrastructure
 
-## Domínio rico (Produto e Pedido)
+- **Persistence.** Domain classes are mapped to the database with TypeORM `EntitySchema` (`persistence/schemas/schemas.ts`), so the domain needs no ORM decorators and no second set of "ORM entities" or mappers. This file is the only place that knows the table and column names. TypeORM repositories implement the domain contracts.
+- **Transactions.** `UnitOfWork.run(work)` gives the use case transaction-bound repositories. Checkout (order + items + stock) and cancellation (status + stock) are atomic. Stock changes are `quantity = quantity ± N` statements, never "read, compute, write back", so concurrent checkouts cannot overwrite each other.
+- **Events.** Handlers translate domain events into admin notifications (`AdminNotificationHandler`) and webhook deliveries (`WebhookDispatchHandler`). Adding a reaction does not touch the use case that raised the event.
 
-`ProdutoEntity`/`PedidoEntity` continuam sendo só o espelho da tabela
-(decoradas com TypeORM). As **regras** vivem em classes de domínio separadas,
-sem nenhum import de framework, convertidas por mappers:
+## Presentation
 
-- `Produto` (`produtos/domain`): `temEstoqueSuficiente`, `decrementarEstoque`
-  (lança `EstoqueInsuficienteError`), `calcularSubtotal`.
-- `Pedido` (`pedidos/domain`): `cancelar` (status cancelável + janela de 2h),
-  `marcarComoPago`, `garantirQuePertenceAo`.
+- **Controllers** are thin: parse the request, call a use case, wrap the result in `{ success, message, data }`.
+- **DTOs** validate input with `class-validator`.
+- **Presenters** (`support/presenters.ts`) shape responses.
+- **One exception filter** is the only place where application and domain errors become HTTP status codes. 4xx are logged as warnings; 5xx are logged with the stack trace and reported to `ErrorReporter`.
+- **Guards:** `JwtAuthGuard`, `OptionalAuthGuard`, `AdminGuard`, `FeatureFlagGuard('key')`. They use the `TokenService` port, not a JWT library.
 
-O domínio lança `DomainError` (nunca `HttpException` — ele não sabe o que é
-HTTP). A tradução para status HTTP acontece **na fronteira**, no Use Case, via
-`translateDomainError`: `PedidoNaoPertenceAoUsuarioError` → 403, qualquer
-outro `DomainError` → 400, e erros que não são de domínio passam intactos.
+### The public HTTP contract is kept in one layer
 
-**Decisão importante — domínio valida, banco escreve.** `Produto.decrementarEstoque`
-muta só o objeto em memória (serve para validar). A baixa real de estoque
-continua sendo `UPDATE ... SET quantidade = quantidade - N`, atômico, dentro da
-transação. O caminho "lê a quantidade, calcula no domínio, grava o valor novo"
-teria race condition entre dois checkouts simultâneos (os dois leem 5,
-ambos gravam 4).
+Routes (`/usuario/registro`), request field names (`nome`, `senha`) and response field names (`id_pedido`, `valor_total`) are the contract with the existing web and mobile clients, so they were **not** renamed. They are confined to `presentation`: routes in the controllers, request names in the DTOs' `@Expose({ name })`, response names in the presenters. Everything behind that layer uses English names. Renaming the contract later would only touch those three places.
 
-Escopo: só `Pedido` e `Produto`, que são onde estão as regras comportamentais
-(estoque, janela de cancelamento, transições de status). As outras 10 entidades
-seguem anêmicas porque não têm regra que justifique um objeto de domínio.
+The same applies to persisted values: enum members are English (`OrderStatus.PAID`) while their values are what the database already stores (`'pago'`).
 
-## Autenticação: access + refresh token
+## Request flow
 
-Inalterado da rodada anterior: access token de 15 min (`JWT_SECRET`),
-refresh token de 7 dias (`JWT_REFRESH_SECRET`, segredo separado), cada um
-marcado com `type: 'access' | 'refresh'` no payload para impedir uso
-cruzado. Ver `MIGRATION_NOTES.md` da rodada anterior para o raciocínio
-completo.
-
-## Transações
-
-TypeORM não tem um equivalente direto a `prisma.$transaction(fn)` no nível
-do repositório — a transação é aberta a partir de `DataSource`, que
-entrega um `EntityManager` transacional para o callback:
-
-```ts
-async runTransaction<T>(fn: (manager: EntityManager) => Promise<T>): Promise<T> {
-  return this.dataSource.transaction(fn);
-}
+```
+HTTP -> middleware -> guards -> ValidationPipe (DTO) -> controller -> use case
+        -> domain entity rules -> repository contract -> TypeORM -> MySQL
+        <- presenter <- controller <- result          errors -> AllExceptionsFilter -> HTTP status
 ```
 
-Dentro do callback, `manager.getRepository(Entity)` dá acesso aos métodos
-normais do TypeORM, só que participando da mesma transação (commit/rollback
-juntos). Usado em `PedidosService.checkout` (criar pedido + baixar
-estoque) e `UsuarioService.cancelarPedido` (cancelar + devolver estoque).
+## Health check
 
-## Tratamento de erros
+`CheckHealthUseCase` runs every registered `HealthProbe` in parallel; a probe that throws counts as down. `buildHealthReport` (domain) aggregates the result. `HealthController` maps it to `200`/`503`. `GET /health/live` deliberately checks no dependency, so an orchestrator does not restart a healthy process just because the database is down.
 
-Inalterado em estrutura: um único `AllExceptionsFilter` global, que separa
-erro de negócio (4xx, log `warn`) de erro técnico (5xx, log `error` +
-Sentry). O que mudou foi o mapeador de erros de banco
-(`db-error-mapper.ts`): TypeORM propaga o erro nativo do driver mysql2
-(`QueryFailedError` copia `.code`), então checar `err.code === 'ER_DUP_ENTRY'`
-funciona sem precisar de tradução de códigos específicos de um ORM.
+## What was deliberately left out
 
-## Testes E2E contra um banco real
-
-`test/test-database.module.ts` substitui `DatabaseModule` via
-`.overrideModule()` do Nest, usando SQLite em memória
-(`better-sqlite3`, `synchronize: true`). Isso só é possível porque o
-TypeORM não depende de nenhum binário externo para funcionar — ao
-contrário do `PrismaClient`, que precisa baixar um binário de engine para
-sequer gerar os tipos. Os testes E2E exercitam relações, FKs e
-constraints de unicidade reais (ex.: o teste de "rejeitar segundo registro
-com mesmo e-mail" depende do `@Column({ unique: true })` da entidade
-`UsuarioEntity` disparando um erro de verdade).
-
-## O que continua igual (rodada anterior)
-
-Observer/Event Bus para notificações de admin + webhooks, cache em
-memória, rate limiting, Helmet, CORS via env, enums, Repository Pattern,
-Swagger, Sentry/e-mail/webhooks como integrações opcionais e inertes sem
-credenciais reais, e as mesmas decisões de **não** implementar CSRF (API
-stateless Bearer-token), Clean Architecture completa, ou separação de
-pastas admin/cliente. Ver `MIGRATION_NOTES.md` para o detalhamento
-original dessas escolhas.
+- **CSRF protection:** not applicable to a stateless bearer-token API.
+- **Redis cache, APM, secrets manager:** need external services; the ports are in place.
+- **Access-token revocation on logout:** access tokens remain valid until they expire (15 minutes). Logout does revoke the submitted refresh token, preventing it from issuing another access token.

@@ -1,79 +1,84 @@
-# Suki Doces — API REST (NestJS + TypeORM)
+# Suki Doces API
 
-![NestJS](https://img.shields.io/badge/NestJS-E0234E?style=for-the-badge&logo=nestjs&logoColor=white)
-![TypeORM](https://img.shields.io/badge/TypeORM-FE0803?style=for-the-badge)
-![MySQL](https://img.shields.io/badge/MySQL-005C84?style=for-the-badge&logo=mysql&logoColor=white)
+REST API of the Suki Doces store: catalog, cart, orders, admin panel, e-mail verification, webhooks and an AI sales assistant.
+Built with **NestJS + TypeORM (MySQL)** and organized with **Clean Architecture**.
 
-Back-end da Suki Doces: Express → NestJS → (revisão de arquitetura) →
-**Prisma → TypeORM** (requisito do professor: front-end em React Native,
-back-end em NestJS + TypeORM).
+See [`ARCHITECTURE.md`](./ARCHITECTURE.md) for the design and [`REFACTORING_NOTES.md`](./REFACTORING_NOTES.md) for what changed in this version.
 
-📄 **Leia primeiro**: [`MIGRATION_NOTES.md`](./MIGRATION_NOTES.md) tem o
-histórico completo de mudanças, incluindo a migração de ORM.
-[`ARCHITECTURE.md`](./ARCHITECTURE.md) explica as decisões de design.
-
-## Configuração
-
-Para testar o projeto inteiro passo a passo, siga o
-[guia de testes](./TESTE-PROJETO.md).
+## Getting started
 
 ```bash
-npm ci                  # instale as dependências do lockfile
-# configure o .env local com as variáveis obrigatórias descritas abaixo
+npm install
+cp .env.example .env        # fill in your real credentials
 
-npm run migration:run   # roda as migrations contra o MySQL configurado em DATABASE_URL
-npm run seed             # opcional — popula dados de exemplo
-
+npm run migration:run       # create/update the schema before starting the API
+npm run seed                # optional: sample admin, categories and products
 npm run start:dev
 ```
 
-A API sobe em `http://localhost:3000`. Documentação interativa (Swagger)
-em `/docs`. Health check em `/health`, métricas Prometheus em `/metrics`.
+The initial migration creates the schema on an empty MySQL database. For an existing database created outside TypeORM migrations, verify its schema and baseline its migration history before running this initial migration; do not run it against populated tables.
 
-## Testes
+- API: `http://localhost:3000/suki-doces/...`
+- Swagger UI: `http://localhost:3000/docs`
+- Health: `GET /health`, `GET /health/ready`, `GET /health/live`
+- Metrics (Prometheus): `GET /metrics`
 
-```bash
-npm test              # unitários (mocks de repositório/TypeORM)
-npm run test:e2e       # end-to-end — sobe a app inteira contra SQLite EM MEMÓRIA de verdade
-npm run lint           # type-check (tsc --noEmit)
+With Docker: `docker compose up --build` (the API container applies migrations before starting).
+
+## Scripts
+
+| Script | What it does |
+|---|---|
+| `npm run start:dev` | Runs the API in watch mode |
+| `npm run build` | Compiles to `dist/` |
+| `npm run lint` | Type-checks the whole project (`tsc --noEmit`) |
+| `npm test` | Domain/use-case tests and integration tests (SQLite locally; MySQL in CI) |
+| `npm run check:architecture` | Fails if any layer imports something it must not (dependency rule) |
+| `npm run migration:generate -- src/infrastructure/persistence/migrations/Name` | Generates a migration against `DATABASE_URL` |
+| `npm run migration:run` | Applies pending TypeORM migrations (`synchronize` is always off) |
+| `npm run migration:revert` | Reverts the last applied migration |
+| `npm run seed` | Inserts sample data |
+
+## Health check
+
+Meant for load balancers, Kubernetes and uptime monitors. All three routes live outside the API prefix and are exempt from rate limiting.
+
+| Route | Purpose | Success | Failure |
+|---|---|---|---|
+| `GET /health` | Full report: every dependency probe | `200` | `503` |
+| `GET /health/ready` | Readiness: can this instance receive traffic? | `200` | `503` |
+| `GET /health/live` | Liveness: is the process running? (no dependency checked) | `200` | - |
+
+```json
+{
+  "status": "ok",
+  "timestamp": "2026-11-12T10:00:00.000Z",
+  "uptimeSeconds": 1234.5,
+  "checks": {
+    "database": { "status": "up", "responseTimeMs": 3 },
+    "memory": { "status": "up", "responseTimeMs": 0, "details": { "heapUsedMb": 80.2, "heapLimitMb": 500 } }
+  }
+}
 ```
 
-O TypeORM não precisa de nenhum binário externo para funcionar — por isso
-os testes E2E rodam contra um banco SQLite real (`better-sqlite3`,
-`:memory:`), não apenas mocks. Isso valida relações, chaves estrangeiras e
-constraints de verdade, não só "compila".
+A new probe is one class implementing `HealthProbe` and one line in `InfrastructureModule`.
 
-## Com Docker
+## Environment variables
 
-```bash
-docker compose up --build
-```
+Required (the app refuses to start without them): `DATABASE_URL`, `JWT_SECRET`, `JWT_REFRESH_SECRET`, `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET`.
+Optional: `GEMINI_API_KEY`, `ALLOWED_ORIGINS`, `TRUST_PROXY`, `SENTRY_DSN`, `SMTP_*`, `FRONTEND_URL`, `THROTTLE_*`, `BCRYPT_SALT_ROUNDS`. Set `TRUST_PROXY` to the trusted proxy hop count or a comma-separated list of trusted IPs/CIDRs when deployed behind a proxy. See `.env.example`.
 
-## Estrutura
+Customer accounts must verify their e-mail before they can log in or use authenticated routes. Refresh tokens rotate on every refresh and are single-use; logout accepts the current refresh token in its JSON body and revokes it. Checkout requires a unique `Idempotency-Key` header for each new purchase; retries with the same key and payload return the original order.
+
+## Project layout
 
 ```
 src/
-  database/
-    entities/     — as 12 entidades TypeORM (@Entity)
-    data-source.ts — usado pela CLI de migrations
-    database.module.ts — TypeOrmModule.forRootAsync (conexão real)
-    seed.ts
-  common/repositories/ — Repository Pattern para as 5 entidades usadas
-                          por 3+ módulos (Usuario, Administrador,
-                          Produto, Categoria, Pedido)
-  auth/, usuario/, produtos/, carrinho/, pedidos/ — cada um com use-cases/
-                          (e domain/ em produtos e pedidos)
-  categorias/,
-  clientes/, admin/, admin-perfil/, notificacoes/, contato/, chat/
-  notifications/  — barramento de eventos (Observer) p/ notificar admin
-  webhooks/       — dispara eventos p/ URLs de terceiros (feature flag)
-  feature-flags/, email/, health/, metrics/, cloudinary/
-  common/         — guards, filtros, decorators, enums, validators
+  domain/           entities, business rules, enums, domain events, repository contracts
+  application/      use cases, ports (contracts for external things), application errors
+  infrastructure/   TypeORM persistence, bcrypt, JWT, Cloudinary, SMTP, Gemini, events, cache, Sentry, metrics, health probes
+  presentation/http controllers, DTOs, presenters, guards, exception filter, middleware, feature modules
+  app.module.ts     composition root
+test/               integration tests
+scripts/            check-architecture.js
 ```
-
-## Variáveis de ambiente obrigatórias
-
-A aplicação recusa iniciar sem elas (validação via Joi):
-`DATABASE_URL`, `JWT_SECRET`, `JWT_REFRESH_SECRET`, `CLOUDINARY_CLOUD_NAME`,
-`CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET`. Consulte o `.env` local e o
-[guia de testes](./TESTE-PROJETO.md); não compartilhe credenciais.

@@ -1,4 +1,4 @@
-import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
+import { MiddlewareConsumer, Module, NestModule, RequestMethod } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { APP_FILTER, APP_GUARD } from '@nestjs/core';
 import { EventEmitterModule } from '@nestjs/event-emitter';
@@ -61,6 +61,6 @@ import { WebhooksModule } from './presentation/http/modules/webhooks.module';
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
-    consumer.apply(LoggerMiddleware, MetricsMiddleware).forRoutes('*');
+    consumer.apply(LoggerMiddleware, MetricsMiddleware).forRoutes({ path: '/{*splat}', method: RequestMethod.ALL });
   }
 }

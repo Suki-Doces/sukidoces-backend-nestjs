@@ -7,6 +7,8 @@ See [`ARCHITECTURE.md`](./ARCHITECTURE.md) for the design and [`REFACTORING_NOTE
 
 ## Getting started
 
+Use Node.js 20 (the version used by Docker and integration tests):
+
 ```bash
 npm install
 cp .env.example .env        # fill in your real credentials

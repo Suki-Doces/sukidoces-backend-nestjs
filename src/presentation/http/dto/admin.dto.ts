@@ -6,13 +6,14 @@ import { Sanitize } from '../decorators/sanitize.decorator';
 export class UpdateAdminSettingsDto {
   @ApiPropertyOptional({ name: 'nome' })
   @Expose({ name: 'nome' })
-  @ApiPropertyOptional({ example: 'admin@example.com' })
   @IsOptional()
   @Sanitize()
   @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
   @IsString()
   name?: string;
 
+  @ApiPropertyOptional({ example: 'admin@example.com' })
+  @Expose({ name: 'email' })
   @IsOptional()
   @Transform(({ value }) => (typeof value === 'string' ? value.trim().toLowerCase() : value))
   @IsEmail({}, { message: 'email must be valid' })

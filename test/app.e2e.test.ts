@@ -74,6 +74,16 @@ describe('Suki Doces API (integration)', () => {
       expect(document).toHaveProperty('components.schemas.RegisterDto.properties.nome');
       expect(document).toHaveProperty('components.schemas.RegisterDto.properties.senha');
       expect(document).not.toHaveProperty('components.schemas.RegisterDto.properties.name');
+      expect(document).toHaveProperty('components.schemas.UpdateProfileDto.properties.cpf');
+      expect(document).toHaveProperty('components.schemas.UpdateProfileDto.properties.telefone');
+      expect(document).toHaveProperty('components.schemas.UpdateAdminSettingsDto.properties.email');
+      expect(document).toHaveProperty('components.schemas.UpdateAdminSettingsDto.properties.nome');
+      expect(document).toHaveProperty('components.schemas.UpdateCustomerDto.properties.status');
+      expect(document).toHaveProperty('components.schemas.UpdateCustomerDto.properties.status.enum', ['ativo', 'inativo']);
+      expect(document).toHaveProperty(
+        'components.schemas.CheckoutDto.required',
+        expect.arrayContaining(['produtos', 'metodo_pagamento']),
+      );
       const checkoutHeaders = document.paths['/suki-doces/pedidos'].post?.parameters ?? [];
       expect(checkoutHeaders).toEqual(expect.arrayContaining([expect.objectContaining({ name: 'Idempotency-Key', in: 'header', required: true })]));
     });

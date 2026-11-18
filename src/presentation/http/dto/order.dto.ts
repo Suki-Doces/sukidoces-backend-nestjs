@@ -18,7 +18,7 @@ export class CheckoutLineDto {
 }
 
 export class CheckoutDto {
-  @ApiPropertyOptional({ name: 'produtos', type: [CheckoutLineDto] })
+  @ApiProperty({ name: 'produtos', type: [CheckoutLineDto] })
   @Expose({ name: 'produtos' })
   @IsOptional()
   @IsArray()
@@ -26,7 +26,7 @@ export class CheckoutDto {
   @Type(() => CheckoutLineDto)
   products?: CheckoutLineDto[];
 
-  @ApiPropertyOptional({ name: 'metodo_pagamento' })
+  @ApiProperty({ name: 'metodo_pagamento' })
   @Expose({ name: 'metodo_pagamento' })
   @IsOptional()
   paymentMethod?: string;

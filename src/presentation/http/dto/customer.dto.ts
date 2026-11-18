@@ -34,15 +34,16 @@ export class CreateCustomerDto {
 }
 
 export class UpdateCustomerDto {
-  @ApiPropertyOptional({ name: 'nome', minLength: 2 })
+  @ApiPropertyOptional({ name: 'nome' })
   @Expose({ name: 'nome' })
-  @ApiPropertyOptional({ enum: STATUS_VALUES })
   @IsOptional()
   @Sanitize()
   @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
   @IsString()
   name?: string;
 
+  @ApiPropertyOptional({ enum: STATUS_VALUES, example: CUSTOMER_STATUS.ACTIVE })
+  @Expose({ name: 'status' })
   @IsOptional()
   @IsIn(STATUS_VALUES, { message: `status must be one of: ${STATUS_VALUES.join(', ')}` })
   status?: string;

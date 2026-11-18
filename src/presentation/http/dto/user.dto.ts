@@ -29,11 +29,12 @@ export class UpdateProfileDto {
 
   @ApiPropertyOptional({ name: 'telefone' })
   @Expose({ name: 'telefone' })
-  @ApiPropertyOptional({ example: '52998224725' })
   @IsOptional()
   @IsString()
   phone?: string;
 
+  @ApiPropertyOptional({ name: 'cpf', example: '52998224725' })
+  @Expose({ name: 'cpf' })
   @IsOptional()
   @IsCpf()
   cpf?: string;

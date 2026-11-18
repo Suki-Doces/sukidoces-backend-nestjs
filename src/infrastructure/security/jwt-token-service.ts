@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
+import type { JwtSignOptions } from '@nestjs/jwt';
 import { randomUUID } from 'crypto';
 import { InvalidTokenError, TokenExpiredError } from '../../application/errors/application-errors';
 import { TokenClaims, TokenPair, TokenPayload, TokenService } from '../../application/ports/token-service';
@@ -18,11 +19,15 @@ export class JwtTokenService extends TokenService {
     super();
     this.accessJwt = new JwtService({
       secret: config.get<string>('JWT_SECRET'),
-      signOptions: { expiresIn: config.get<string>('JWT_ACCESS_EXPIRES_IN') || '15m' },
+      signOptions: {
+        expiresIn: config.get<JwtSignOptions['expiresIn']>('JWT_ACCESS_EXPIRES_IN') || '15m',
+      },
     });
     this.refreshJwt = new JwtService({
       secret: config.get<string>('JWT_REFRESH_SECRET'),
-      signOptions: { expiresIn: config.get<string>('JWT_REFRESH_EXPIRES_IN') || '7d' },
+      signOptions: {
+        expiresIn: config.get<JwtSignOptions['expiresIn']>('JWT_REFRESH_EXPIRES_IN') || '7d',
+      },
     });
   }
 

@@ -14,7 +14,11 @@ export interface HealthReport {
 }
 
 /** The application is healthy only when every dependency probe is up. */
-export function buildHealthReport(checks: Record<string, ProbeResult>, uptimeSeconds: number, now = new Date()): HealthReport {
+export function buildHealthReport(
+  checks: Record<string, ProbeResult>,
+  uptimeSeconds: number,
+  now = new Date(),
+): HealthReport {
   const allUp = Object.values(checks).every((check) => check.status === 'up');
   return {
     status: allUp ? 'ok' : 'error',

@@ -4,7 +4,7 @@
   "description": "Suki Doces e-commerce API — NestJS + TypeORM, organized with Clean Architecture",
   "license": "ISC",
   "engines": {
-    "node": ">=20 <21",
+    "node": ">=20.19 <21",
     "npm": ">=10"
   },
   "scripts": {
@@ -12,11 +12,14 @@
     "start": "nest start",
     "start:dev": "nest start --watch",
     "start:prod": "node dist/main",
-    "test": "jest --config ./test/jest-e2e.json",
+    "test": "jest --config ./test/jest-e2e.json --coverage",
     "test:e2e": "jest --config ./test/jest-e2e.json",
-    "lint": "tsc --noEmit",
-    "seed": "ts-node src/infrastructure/persistence/seed.ts",
-    "typeorm": "ts-node ./node_modules/typeorm/cli.js -d src/infrastructure/persistence/data-source.ts",
+    "lint": "eslint \"src/**/*.ts\" \"test/**/*.ts\" \"scripts/**/*.js\" \"eslint.config.mjs\"",
+    "typecheck": "tsc --noEmit",
+    "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\" \"scripts/**/*.js\" \"package.json\" \"tsconfig.json\" \"tsconfig.build.json\" \"nest-cli.json\" \"test/jest-e2e.json\" \"eslint.config.mjs\" \".prettierrc.json\" \".github/workflows/*.yml\"",
+    "format:check": "prettier --check \"src/**/*.ts\" \"test/**/*.ts\" \"scripts/**/*.js\" \"package.json\" \"tsconfig.json\" \"tsconfig.build.json\" \"nest-cli.json\" \"test/jest-e2e.json\" \"eslint.config.mjs\" \".prettierrc.json\" \".github/workflows/*.yml\"",
+    "seed": "ts-node -r tsconfig-paths/register src/infrastructure/persistence/seed.ts",
+    "typeorm": "ts-node -r tsconfig-paths/register ./node_modules/typeorm/cli.js -d src/infrastructure/persistence/data-source.ts",
     "migration:generate": "npm run typeorm -- migration:generate",
     "migration:run": "npm run typeorm -- migration:run",
     "migration:revert": "npm run typeorm -- migration:revert",
@@ -53,6 +56,7 @@
     "typeorm": "^0.3.31"
   },
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
     "@nestjs/cli": "^11.0.24",
     "@nestjs/schematics": "^11.1.0",
     "@nestjs/testing": "^11.1.1",
@@ -63,17 +67,24 @@
     "@types/node": "^22.10.2",
     "@types/nodemailer": "^6.4.17",
     "@types/supertest": "^6.0.2",
+    "eslint": "^10.15.0",
+    "globals": "^17.14.0",
     "jest": "^29.7.0",
+    "prettier": "^3.10.1",
     "sql.js": "^1.13.0",
     "supertest": "^7.0.0",
     "ts-jest": "^29.2.5",
     "ts-loader": "^9.5.1",
     "ts-node": "^10.9.2",
     "tsconfig-paths": "^4.2.0",
-    "typescript": "^5.7.2"
+    "typescript": "^5.7.2",
+    "typescript-eslint": "^8.73.0"
   },
   "overrides": {
     "ajv": "^8.18.0",
+    "eslint": {
+      "ajv": "^6.14.0"
+    },
     "js-yaml": "^4.3.2",
     "lodash": "^4.18.1",
     "multer": "$multer",

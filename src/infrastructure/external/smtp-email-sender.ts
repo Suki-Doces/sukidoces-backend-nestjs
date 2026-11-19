@@ -1,8 +1,7 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as nodemailer from 'nodemailer';
-import { AppLogger } from '../../application/ports/app-logger';
-import { EmailSender } from '../../application/ports/email-sender';
+import { AppLogger, EmailSender } from '@application/ports';
 
 /** Without SMTP credentials the e-mail is only logged, so local development works out of the box. */
 @Injectable()
@@ -22,11 +21,17 @@ export class SmtpEmailSender extends EmailSender implements OnModuleInit {
     const pass = this.config.get<string>('SMTP_PASS');
 
     if (!host || !user || !pass) {
-      this.logger.warn('SMTP is not configured (SMTP_HOST/SMTP_USER/SMTP_PASS missing): e-mails will only be logged.');
+      this.logger.warn(
+        'SMTP is not configured (SMTP_HOST/SMTP_USER/SMTP_PASS missing): e-mails will only be logged.',
+      );
       return;
     }
 
-    this.transporter = nodemailer.createTransport({ host, port: this.config.get<number>('SMTP_PORT'), auth: { user, pass } });
+    this.transporter = nodemailer.createTransport({
+      host,
+      port: this.config.get<number>('SMTP_PORT'),
+      auth: { user, pass },
+    });
     this.logger.log('SMTP e-mail transport configured.');
   }
 
@@ -41,7 +46,12 @@ export class SmtpEmailSender extends EmailSender implements OnModuleInit {
     }
 
     try {
-      await this.transporter.sendMail({ from: this.config.get('SMTP_FROM') || 'no-reply@sukidoces.com', to, subject, html });
+      await this.transporter.sendMail({
+        from: this.config.get('SMTP_FROM') || 'no-reply@sukidoces.com',
+        to,
+        subject,
+        html,
+      });
     } catch (error) {
       this.logger.error(`Failed to send verification e-mail to ${to}`, error);
     }

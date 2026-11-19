@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
-import { Category } from '../../../domain/entities';
-import { CategoryRepository } from '../../../domain/repositories';
-import { CacheStore } from '../../ports';
+import { Category } from '@domain/entities';
+import { CategoryRepository } from '@domain/repositories';
+import { CacheStore } from '@application/ports';
 
 const CACHE_KEY = 'products:categories';
 

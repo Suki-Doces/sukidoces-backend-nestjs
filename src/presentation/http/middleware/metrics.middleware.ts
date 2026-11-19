@@ -1,6 +1,6 @@
 import { Injectable, NestMiddleware } from '@nestjs/common';
 import { NextFunction, Request, Response } from 'express';
-import { Metrics } from '../../../application/ports/metrics';
+import { Metrics } from '@application/ports';
 
 @Injectable()
 export class MetricsMiddleware implements NestMiddleware {
@@ -11,8 +11,14 @@ export class MetricsMiddleware implements NestMiddleware {
 
     response.on('finish', () => {
       const [seconds, nanoseconds] = process.hrtime(start);
-      const route = (request as any).route?.path || request.path;
-      this.metrics.recordHttpRequest(request.method, route, response.statusCode, seconds + nanoseconds / 1e9);
+      const routePath = request.route?.path;
+      const route = typeof routePath === 'string' ? routePath : request.path;
+      this.metrics.recordHttpRequest(
+        request.method,
+        route,
+        response.statusCode,
+        seconds + nanoseconds / 1e9,
+      );
     });
 
     next();

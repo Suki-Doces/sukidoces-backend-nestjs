@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { Webhook } from '../../../domain/entities';
-import { WebhookRepository } from '../../../domain/repositories';
+import { Webhook } from '@domain/entities';
+import { WebhookRepository } from '@domain/repositories';
 
 @Injectable()
 export class ListWebhooksUseCase {

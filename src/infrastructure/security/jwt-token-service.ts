@@ -3,8 +3,8 @@ import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import type { JwtSignOptions } from '@nestjs/jwt';
 import { randomUUID } from 'crypto';
-import { InvalidTokenError, TokenExpiredError } from '../../application/errors/application-errors';
-import { TokenClaims, TokenPair, TokenPayload, TokenService } from '../../application/ports/token-service';
+import { InvalidTokenError, TokenExpiredError } from '@application/errors';
+import { TokenClaims, TokenPair, TokenPayload, TokenService } from '@application/ports';
 
 /**
  * Access and refresh tokens use different secrets: leaking the access secret
@@ -33,7 +33,11 @@ export class JwtTokenService extends TokenService {
 
   async issuePair(payload: TokenPayload): Promise<TokenPair> {
     const accessToken = await this.accessJwt.signAsync({ ...payload, type: 'access' });
-    const refreshToken = await this.refreshJwt.signAsync({ ...payload, type: 'refresh', jti: randomUUID() });
+    const refreshToken = await this.refreshJwt.signAsync({
+      ...payload,
+      type: 'refresh',
+      jti: randomUUID(),
+    });
     return { token: accessToken, accessToken, refreshToken };
   }
 
@@ -46,7 +50,10 @@ export class JwtTokenService extends TokenService {
   }
 
   signEmailVerificationToken(userId: number): Promise<string> {
-    return this.accessJwt.signAsync({ id: userId, type: 'email-verification' }, { expiresIn: '24h' });
+    return this.accessJwt.signAsync(
+      { id: userId, type: 'email-verification' },
+      { expiresIn: '24h' },
+    );
   }
 
   verifyEmailVerificationToken(token: string): Promise<{ id: number; type?: string }> {
@@ -56,9 +63,11 @@ export class JwtTokenService extends TokenService {
   private async verify(jwt: JwtService, token: string): Promise<TokenClaims> {
     try {
       return await jwt.verifyAsync<TokenClaims>(token);
-    } catch (error: any) {
-      if (error?.name === 'TokenExpiredError') throw new TokenExpiredError();
-      if (error?.name === 'JsonWebTokenError' || error?.name === 'NotBeforeError') throw new InvalidTokenError();
+    } catch (error: unknown) {
+      const errorName = error instanceof Error ? error.name : undefined;
+      if (errorName === 'TokenExpiredError') throw new TokenExpiredError();
+      if (errorName === 'JsonWebTokenError' || errorName === 'NotBeforeError')
+        throw new InvalidTokenError();
       throw error;
     }
   }

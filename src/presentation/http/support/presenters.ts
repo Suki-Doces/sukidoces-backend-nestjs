@@ -1,10 +1,20 @@
-import { AdminProfile, Category, ContactMessage, FeatureFlag, Notification, Order, OrderItem, Product, UserProfile, Webhook } from '../../../domain/entities';
-import { DashboardView } from '../../../application/use-cases/admin/get-dashboard.use-case';
-import { AdminOrderView } from '../../../application/use-cases/orders/list-all-orders.use-case';
-import { CartSummary } from '../../../application/use-cases/cart/list-cart.use-case';
-import { ListCustomersResult } from '../../../application/use-cases/customers/list-customers.use-case';
-import { LoginResult } from '../../../application/use-cases/auth/login.use-case';
-import { RegisterUserResult } from '../../../application/use-cases/auth/register-user.use-case';
+import {
+  AdminProfile,
+  Category,
+  ContactMessage,
+  FeatureFlag,
+  Notification,
+  Order,
+  OrderItem,
+  Product,
+  UserProfile,
+  Webhook,
+} from '@domain/entities';
+import { DashboardView } from '@application/use-cases/admin';
+import { AdminOrderView } from '@application/use-cases/orders';
+import { CartSummary } from '@application/use-cases/cart';
+import { ListCustomersResult } from '@application/use-cases/customers';
+import { LoginResult, RegisterUserResult } from '@application/use-cases/auth';
 
 export const presentCategory = (category: Category) => ({
   id_categoria: category.id,
@@ -22,7 +32,9 @@ export const presentProduct = (product: Product) => ({
   ativo: product.active,
   id_categoria: product.categoryId,
   data_criacao: product.createdAt,
-  ...(product.category !== undefined && { categorias: product.category ? presentCategory(product.category) : null }),
+  ...(product.category !== undefined && {
+    categorias: product.category ? presentCategory(product.category) : null,
+  }),
 });
 
 export const presentOrderItem = (item: OrderItem) => ({
@@ -31,7 +43,9 @@ export const presentOrderItem = (item: OrderItem) => ({
   id_produto: item.productId,
   quantidade: item.quantity,
   preco_unitario: item.unitPrice,
-  ...(item.product !== undefined && { produtos: item.product ? presentProduct(item.product) : null }),
+  ...(item.product !== undefined && {
+    produtos: item.product ? presentProduct(item.product) : null,
+  }),
 });
 
 export const presentOrder = (order: Order) => ({
@@ -108,7 +122,11 @@ export const presentAdminOrder = (order: AdminOrderView) => ({
   status: order.status,
   valor_total: order.totalAmount,
   metodo_pagamento: order.paymentMethod,
-  itens: order.items.map((item) => ({ nome: item.name, quantidade: item.quantity, imagem: item.image })),
+  itens: order.items.map((item) => ({
+    nome: item.name,
+    quantidade: item.quantity,
+    imagem: item.image,
+  })),
 });
 
 export const presentCustomers = (result: ListCustomersResult) => ({

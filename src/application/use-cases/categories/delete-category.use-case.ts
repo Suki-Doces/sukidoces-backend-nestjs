@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { CategoryRepository } from '../../../domain/repositories';
-import { InternalError } from '../../errors/application-errors';
+import { CategoryRepository } from '@domain/repositories';
+import { InternalError } from '@application/errors';
 
 @Injectable()
 export class DeleteCategoryUseCase {

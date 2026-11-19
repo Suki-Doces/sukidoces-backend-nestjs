@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
-import { AdminProfile } from '../../../domain/entities';
-import { AdminRepository } from '../../../domain/repositories';
-import { NotFoundError } from '../../errors/application-errors';
+import { AdminProfile } from '@domain/entities';
+import { AdminRepository } from '@domain/repositories';
+import { NotFoundError } from '@application/errors';
 
 @Injectable()
 export class GetAdminProfileUseCase {

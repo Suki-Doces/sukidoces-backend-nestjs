@@ -1,4 +1,4 @@
-import { CartItem } from '../entities';
+import { CartItem } from '@domain/entities';
 
 export abstract class CartRepository {
   abstract findByUser(userId: number): Promise<CartItem[]>;

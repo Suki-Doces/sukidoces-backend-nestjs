@@ -1,4 +1,4 @@
-import { DomainEvent } from '../../domain/events/domain-events';
+import { DomainEvent } from '@domain/events';
 
 export interface WebhookDelivery {
   event: DomainEvent;

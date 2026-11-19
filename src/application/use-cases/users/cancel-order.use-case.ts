@@ -1,9 +1,9 @@
 import { Injectable } from '@nestjs/common';
-import { Order } from '../../../domain/entities';
-import { OrderCancelledEvent } from '../../../domain/events/domain-events';
-import { OrderRepository } from '../../../domain/repositories';
-import { NotFoundError } from '../../errors/application-errors';
-import { EventPublisher, UnitOfWork } from '../../ports';
+import { Order } from '@domain/entities';
+import { OrderCancelledEvent } from '@domain/events';
+import { OrderRepository } from '@domain/repositories';
+import { NotFoundError } from '@application/errors';
+import { EventPublisher, UnitOfWork } from '@application/ports';
 
 @Injectable()
 export class CancelOrderUseCase {

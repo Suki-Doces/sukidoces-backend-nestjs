@@ -1,14 +1,24 @@
-import { Body, Controller, Delete, Get, Param, ParseIntPipe, Post, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  ParseIntPipe,
+  Post,
+  UseGuards,
+} from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
-import { CreateWebhookUseCase } from '../../../application/use-cases/webhooks/create-webhook.use-case';
-import { DeleteWebhookUseCase } from '../../../application/use-cases/webhooks/delete-webhook.use-case';
-import { ListWebhooksUseCase } from '../../../application/use-cases/webhooks/list-webhooks.use-case';
-import { CreateWebhookDto } from '../dto/webhook.dto';
-import { AdminGuard } from '../guards/admin.guard';
-import { FeatureFlagGuard } from '../guards/feature-flag.guard';
-import { JwtAuthGuard } from '../guards/jwt-auth.guard';
-import { successResponse } from '../support/api-response';
-import { presentWebhook } from '../support/presenters';
+import {
+  CreateWebhookUseCase,
+  DeleteWebhookUseCase,
+  ListWebhooksUseCase,
+} from '@application/use-cases/webhooks';
+
+import { CreateWebhookDto } from '@presentation/http/dto';
+import { AdminGuard, FeatureFlagGuard, JwtAuthGuard } from '@presentation/http/guards';
+
+import { successResponse, presentWebhook } from '@presentation/http/support';
 
 @ApiTags('webhooks')
 @Controller('admin/webhooks')
@@ -22,12 +32,18 @@ export class WebhooksController {
 
   @Get()
   async list() {
-    return successResponse('Webhooks loaded successfully', (await this.listWebhooks.execute()).map(presentWebhook));
+    return successResponse(
+      'Webhooks loaded successfully',
+      (await this.listWebhooks.execute()).map(presentWebhook),
+    );
   }
 
   @Post()
   async create(@Body() dto: CreateWebhookDto) {
-    return successResponse('Webhook registered successfully', presentWebhook(await this.createWebhook.execute(dto)));
+    return successResponse(
+      'Webhook registered successfully',
+      presentWebhook(await this.createWebhook.execute(dto)),
+    );
   }
 
   @Delete(':id')

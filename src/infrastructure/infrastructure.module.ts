@@ -14,26 +14,37 @@ import {
   RequestHasher,
   TokenService,
   WebhookClient,
-} from '../application/ports';
-import { NotifyAdminUseCase } from '../application/use-cases/notifications/notify-admin.use-case';
-import { DispatchWebhooksUseCase } from '../application/use-cases/webhooks/dispatch-webhooks.use-case';
-import { CacheManagerStore } from './cache/cache-manager-store';
-import { CloudinaryImageStorage } from './external/cloudinary-image-storage';
-import { FetchWebhookClient } from './external/fetch-webhook-client';
-import { GeminiChatAssistant } from './external/gemini-chat-assistant';
-import { SmtpEmailSender } from './external/smtp-email-sender';
-import { DatabaseHealthProbe } from './health/database-health.probe';
-import { MemoryHealthProbe } from './health/memory-health.probe';
-import { AdminNotificationHandler } from './messaging/admin-notification.handler';
-import { EventEmitterPublisher } from './messaging/event-emitter-publisher';
-import { WebhookDispatchHandler } from './messaging/webhook-dispatch.handler';
-import { NestAppLogger } from './observability/nest-app-logger';
-import { PrometheusMetrics } from './observability/prometheus-metrics';
-import { SentryErrorReporter } from './observability/sentry-error-reporter';
-import { PersistenceModule } from './persistence/persistence.module';
-import { BcryptPasswordHasher } from './security/bcrypt-password-hasher';
-import { JwtTokenService } from './security/jwt-token-service';
-import { Sha256RequestHasher } from './security/sha256-request-hasher';
+} from '@application/ports';
+import { NotifyAdminUseCase } from '@application/use-cases/notifications';
+import { DispatchWebhooksUseCase } from '@application/use-cases/webhooks';
+import { CacheManagerStore } from '@infrastructure/cache';
+import {
+  CloudinaryImageStorage,
+  FetchWebhookClient,
+  GeminiChatAssistant,
+  SmtpEmailSender,
+} from '@infrastructure/external';
+
+import { DatabaseHealthProbe, MemoryHealthProbe } from '@infrastructure/health';
+
+import {
+  AdminNotificationHandler,
+  EventEmitterPublisher,
+  WebhookDispatchHandler,
+} from '@infrastructure/messaging';
+
+import {
+  NestAppLogger,
+  PrometheusMetrics,
+  SentryErrorReporter,
+} from '@infrastructure/observability';
+
+import { PersistenceModule } from '@infrastructure/persistence';
+import {
+  BcryptPasswordHasher,
+  JwtTokenService,
+  Sha256RequestHasher,
+} from '@infrastructure/security';
 
 /**
  * Composition root of the outer layer: every application port is bound here
@@ -42,7 +53,10 @@ import { Sha256RequestHasher } from './security/sha256-request-hasher';
  */
 @Global()
 @Module({
-  imports: [PersistenceModule, CacheModule.register({ isGlobal: true, ttl: 5 * 60 * 1000, max: 100 })],
+  imports: [
+    PersistenceModule,
+    CacheModule.register({ isGlobal: true, ttl: 5 * 60 * 1000, max: 100 }),
+  ],
   providers: [
     { provide: PasswordHasher, useClass: BcryptPasswordHasher },
     { provide: TokenService, useClass: JwtTokenService },

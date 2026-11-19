@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { AppLogger } from '../../application/ports/app-logger';
-import { WebhookClient, WebhookDelivery } from '../../application/ports/webhook-client';
+import { AppLogger, WebhookClient, WebhookDelivery } from '@application/ports';
+
 import { toWebhookBody } from './legacy-webhook-payload';
 
 @Injectable()

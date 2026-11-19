@@ -1,13 +1,16 @@
 import { Injectable } from '@nestjs/common';
-import { Category } from '../../../domain/entities';
-import { CategoryRepository } from '../../../domain/repositories';
-import { InternalError, NotFoundError } from '../../errors/application-errors';
+import { Category } from '@domain/entities';
+import { CategoryRepository } from '@domain/repositories';
+import { InternalError, NotFoundError } from '@application/errors';
 
 @Injectable()
 export class UpdateCategoryUseCase {
   constructor(private readonly categories: CategoryRepository) {}
 
-  async execute(id: number, changes: { name?: string; description?: string }): Promise<Category | null> {
+  async execute(
+    id: number,
+    changes: { name?: string; description?: string },
+  ): Promise<Category | null> {
     if (!(await this.categories.findById(id))) {
       throw new NotFoundError('Category not found');
     }

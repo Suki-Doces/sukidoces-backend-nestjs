@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { ProductRepository } from '../../../domain/repositories';
-import { NotFoundError } from '../../errors/application-errors';
+import { ProductRepository } from '@domain/repositories';
+import { NotFoundError } from '@application/errors';
 
 /** Soft delete: the product is deactivated so past orders keep their references. */
 @Injectable()

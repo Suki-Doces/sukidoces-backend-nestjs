@@ -25,6 +25,13 @@ const layerOf = (file) => {
   return LAYERS.includes(first) ? first : null;
 };
 
+const importedLayerOf = (file, specifier) => {
+  const alias = specifier.match(/^@(domain|application|infrastructure|presentation)(?:\/|$)/);
+  if (alias) return alias[1];
+  if (specifier.startsWith('.')) return layerOf(path.resolve(path.dirname(file), specifier));
+  return null;
+};
+
 const importsOf = (source) => {
   const specifiers = [];
   const pattern = /(?:import|export)\s[^'"]*?from\s*['"]([^'"]+)['"]|import\s*['"]([^'"]+)['"]/g;
@@ -41,20 +48,21 @@ for (const file of walk(SRC)) {
 
   for (const specifier of importsOf(fs.readFileSync(file, 'utf8'))) {
     const relativeFile = path.relative(SRC, file);
+    const target = importedLayerOf(file, specifier);
 
-    if (specifier.startsWith('.')) {
-      const target = layerOf(path.resolve(path.dirname(file), specifier));
-      const forbidden =
-        (layer === 'domain' && target && target !== 'domain') ||
-        (layer === 'application' && ['infrastructure', 'presentation'].includes(target)) ||
-        (layer === 'infrastructure' && target === 'presentation') ||
-        (layer === 'presentation' && target === 'infrastructure');
-      if (forbidden) violations.push(`${relativeFile}: ${layer} must not import ${target} ("${specifier}")`);
-    } else {
-      const allowedPackage = layer === 'application' && specifier === '@nestjs/common';
-      if ((layer === 'domain' || layer === 'application') && !allowedPackage) {
-        violations.push(`${relativeFile}: ${layer} must not import the package "${specifier}"`);
-      }
+    const forbiddenLayer =
+      (layer === 'domain' && target && target !== 'domain') ||
+      (layer === 'application' && target && !['application', 'domain'].includes(target)) ||
+      (layer === 'infrastructure' && target === 'presentation') ||
+      (layer === 'presentation' && target === 'infrastructure');
+    if (forbiddenLayer) {
+      violations.push(`${relativeFile}: ${layer} must not import ${target} ("${specifier}")`);
+    }
+
+    const isExternal = !specifier.startsWith('.') && target === null;
+    const allowedPackage = layer === 'application' && specifier === '@nestjs/common';
+    if (isExternal && (layer === 'domain' || layer === 'application') && !allowedPackage) {
+      violations.push(`${relativeFile}: ${layer} must not import the package "${specifier}"`);
     }
   }
 }

@@ -1,10 +1,10 @@
-import { INSTANT_PAYMENT_METHODS, OrderStatus } from '../enums';
+import { INSTANT_PAYMENT_METHODS, OrderStatus } from '@domain/enums';
 import {
   CancellationWindowExpiredError,
   OrderAlreadyProcessedError,
   OrderCannotBeCancelledError,
   OrderNotOwnedError,
-} from '../errors';
+} from '@domain/errors';
 import type { Coupon } from './coupon.entity';
 import type { OrderItem } from './order-item.entity';
 import type { User } from './user.entity';
@@ -45,7 +45,9 @@ export class Order {
       couponId: input.couponId ?? null,
       idempotencyKey: input.idempotencyKey ?? null,
       requestHash: input.requestHash ?? null,
-      status: INSTANT_PAYMENT_METHODS.includes(input.paymentMethod) ? OrderStatus.PAID : OrderStatus.PENDING,
+      status: INSTANT_PAYMENT_METHODS.includes(input.paymentMethod)
+        ? OrderStatus.PAID
+        : OrderStatus.PENDING,
     });
   }
 

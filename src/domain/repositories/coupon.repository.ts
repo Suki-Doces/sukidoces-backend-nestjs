@@ -1,4 +1,4 @@
-import { Coupon } from '../entities';
+import { Coupon } from '@domain/entities';
 
 export abstract class CouponRepository {
   abstract findByCode(code: string): Promise<Coupon | null>;

@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { FeatureFlagRepository } from '../../../domain/repositories';
+import { FeatureFlagRepository } from '@domain/repositories';
 
 @Injectable()
 export class IsFeatureEnabledUseCase {

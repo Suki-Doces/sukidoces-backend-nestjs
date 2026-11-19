@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { FeatureFlag } from '../../../domain/entities';
-import { FeatureFlagRepository } from '../../../domain/repositories';
+import { FeatureFlag } from '@domain/entities';
+import { FeatureFlagRepository } from '@domain/repositories';
 
 @Injectable()
 export class ListFeatureFlagsUseCase {

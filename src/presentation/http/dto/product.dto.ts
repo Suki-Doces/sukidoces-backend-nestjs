@@ -1,7 +1,7 @@
 import { Expose, Transform, Type } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional, PartialType } from '@nestjs/swagger';
 import { IsInt, IsNumber, IsOptional, IsPositive, IsString, Min, MinLength } from 'class-validator';
-import { Sanitize } from '../decorators/sanitize.decorator';
+import { Sanitize } from '@presentation/http/decorators';
 
 // Multipart bodies deliver every value as a string, so numeric fields are
 // converted with @Type before they are validated.

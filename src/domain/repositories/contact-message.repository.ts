@@ -1,4 +1,4 @@
-import { ContactMessage } from '../entities';
+import { ContactMessage } from '@domain/entities';
 
 export abstract class ContactMessageRepository {
   abstract create(data: Partial<ContactMessage>): Promise<ContactMessage>;

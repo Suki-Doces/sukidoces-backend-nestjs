@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { HealthProbe } from '../../application/ports/health-probe';
-import { ProbeResult } from '../../domain/health/health-report';
+import { HealthProbe } from '@application/ports';
+import { ProbeResult } from '@domain/health';
 
 const HEAP_LIMIT_BYTES = 500 * 1024 * 1024;
 const toMegabytes = (bytes: number) => Math.round((bytes / 1024 / 1024) * 10) / 10;

@@ -1,9 +1,9 @@
 import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
-import { InvalidTokenError, UnauthorizedError } from '../../../application/errors/application-errors';
-import { TokenService } from '../../../application/ports/token-service';
-import { UserRole } from '../../../domain/enums';
-import { UserRepository } from '../../../domain/repositories';
-import { RequestWithUser } from '../support/request-with-user';
+import { InvalidTokenError, UnauthorizedError } from '@application/errors';
+import { TokenService } from '@application/ports';
+import { UserRole } from '@domain/enums';
+import { UserRepository } from '@domain/repositories';
+import { RequestWithUser } from '@presentation/http/support';
 
 @Injectable()
 export class JwtAuthGuard implements CanActivate {

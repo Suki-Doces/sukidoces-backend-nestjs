@@ -1,4 +1,4 @@
-import { OrderStatus } from '../enums';
+import { OrderStatus } from '@domain/enums';
 import { DomainError } from './domain-error';
 
 export class OrderCannotBeCancelledError extends DomainError {

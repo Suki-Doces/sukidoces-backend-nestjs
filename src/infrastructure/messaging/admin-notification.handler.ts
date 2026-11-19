@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { OnEvent } from '@nestjs/event-emitter';
-import { NotifyAdminUseCase } from '../../application/use-cases/notifications/notify-admin.use-case';
-import { NotificationType } from '../../domain/enums';
+import { NotifyAdminUseCase } from '@application/use-cases/notifications';
+import { NotificationType } from '@domain/enums';
 import {
   DomainEventNames,
   OrderCancelledEvent,
@@ -9,7 +9,7 @@ import {
   OrderPaidEvent,
   OrderStatusUpdatedEvent,
   UserRegisteredEvent,
-} from '../../domain/events/domain-events';
+} from '@domain/events';
 
 /** Turns domain events into in-app notifications for the administrator. */
 @Injectable()

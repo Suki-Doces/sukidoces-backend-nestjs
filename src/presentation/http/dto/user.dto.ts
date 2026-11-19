@@ -1,8 +1,8 @@
 import { Expose, Transform, Type } from 'class-transformer';
 import { IsDate, IsOptional, IsString, MinLength } from 'class-validator';
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Sanitize } from '../decorators/sanitize.decorator';
-import { IsCpf } from '../validators/is-cpf.validator';
+import { ApiPropertyOptional } from '@nestjs/swagger';
+import { Sanitize } from '@presentation/http/decorators';
+import { IsCpf } from '@presentation/http/validators';
 
 export class ChangePasswordDto {
   // Presence and length are validated by the use case, as before.

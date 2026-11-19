@@ -1,4 +1,4 @@
-import { Webhook } from '../entities';
+import { Webhook } from '@domain/entities';
 
 export abstract class WebhookRepository {
   abstract findAll(): Promise<Webhook[]>;

@@ -1,4 +1,4 @@
-import { Admin } from '../entities';
+import { Admin } from '@domain/entities';
 
 export abstract class AdminRepository {
   abstract findByEmail(email: string): Promise<Admin | null>;

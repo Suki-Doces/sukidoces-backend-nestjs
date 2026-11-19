@@ -1,6 +1,6 @@
 import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
-import { TokenService } from '../../../application/ports/token-service';
-import { RequestWithUser } from '../support/request-with-user';
+import { TokenService } from '@application/ports';
+import { RequestWithUser } from '@presentation/http/support';
 
 /** Authenticates when a valid token is present; otherwise the request continues as anonymous. */
 @Injectable()

@@ -1,9 +1,16 @@
 import { Injectable } from '@nestjs/common';
-import { UserRole } from '../../../domain/enums';
-import { UserRegisteredEvent } from '../../../domain/events/domain-events';
-import { UserRepository } from '../../../domain/repositories';
-import { BadRequestError } from '../../errors/application-errors';
-import { EmailSender, EventPublisher, PasswordHasher, RefreshTokenStore, TokenPair, TokenService } from '../../ports';
+import { UserRole } from '@domain/enums';
+import { UserRegisteredEvent } from '@domain/events';
+import { UserRepository } from '@domain/repositories';
+import { BadRequestError } from '@application/errors';
+import {
+  EmailSender,
+  EventPublisher,
+  PasswordHasher,
+  RefreshTokenStore,
+  TokenPair,
+  TokenService,
+} from '@application/ports';
 import { registerRefreshSession } from './register-refresh-session';
 
 export interface RegisterUserInput {
@@ -14,7 +21,14 @@ export interface RegisterUserInput {
 }
 
 export interface RegisterUserResult extends TokenPair {
-  user: { id: number; name: string; email: string; role: string | null; createdAt: Date; profilePhoto: string | null };
+  user: {
+    id: number;
+    name: string;
+    email: string;
+    role: string | null;
+    createdAt: Date;
+    profilePhoto: string | null;
+  };
 }
 
 @Injectable()
@@ -50,7 +64,11 @@ export class RegisterUserUseCase {
     void this.emailSender.sendVerificationEmail(user.email, verificationToken);
 
     const tokens = await this.tokens.issuePair({ id: user.id, email: user.email, role: user.role });
-    await registerRefreshSession(this.tokens, this.refreshTokens, tokens, { id: user.id, email: user.email, role: user.role });
+    await registerRefreshSession(this.tokens, this.refreshTokens, tokens, {
+      id: user.id,
+      email: user.email,
+      role: user.role,
+    });
 
     return {
       ...tokens,

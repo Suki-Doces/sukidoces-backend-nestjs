@@ -8,4 +8,8 @@ export enum OrderStatus {
 }
 
 /** Statuses that count as a completed sale for revenue metrics. */
-export const SALE_STATUSES: OrderStatus[] = [OrderStatus.PAID, OrderStatus.SHIPPED, OrderStatus.DELIVERED];
+export const SALE_STATUSES: OrderStatus[] = [
+  OrderStatus.PAID,
+  OrderStatus.SHIPPED,
+  OrderStatus.DELIVERED,
+];

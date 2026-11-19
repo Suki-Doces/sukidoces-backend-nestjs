@@ -1,6 +1,6 @@
 import { Repository } from 'typeorm';
-import { Coupon } from '../../../domain/entities';
-import { CouponRepository } from '../../../domain/repositories';
+import { Coupon } from '@domain/entities';
+import { CouponRepository } from '@domain/repositories';
 
 export class TypeOrmCouponRepository implements CouponRepository {
   constructor(private readonly repo: Repository<Coupon>) {}

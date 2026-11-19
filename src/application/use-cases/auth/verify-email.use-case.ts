@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
-import { UserRepository } from '../../../domain/repositories';
-import { UnauthorizedError } from '../../errors/application-errors';
-import { TokenService } from '../../ports';
+import { UserRepository } from '@domain/repositories';
+import { UnauthorizedError } from '@application/errors';
+import { TokenService } from '@application/ports';
 
 @Injectable()
 export class VerifyEmailUseCase {

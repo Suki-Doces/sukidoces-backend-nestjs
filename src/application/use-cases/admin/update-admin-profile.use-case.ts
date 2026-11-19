@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
-import { Admin } from '../../../domain/entities';
-import { AdminRepository } from '../../../domain/repositories';
-import { BadRequestError, NotFoundError, UnauthorizedError } from '../../errors/application-errors';
-import { ImageStorage, PasswordHasher } from '../../ports';
+import { Admin } from '@domain/entities';
+import { AdminRepository } from '@domain/repositories';
+import { BadRequestError, NotFoundError, UnauthorizedError } from '@application/errors';
+import { ImageStorage, PasswordHasher } from '@application/ports';
 
 export interface UpdateAdminProfileInput {
   adminId: number;

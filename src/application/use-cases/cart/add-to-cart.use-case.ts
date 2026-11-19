@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { CartRepository, ProductRepository } from '../../../domain/repositories';
-import { BadRequestError, NotFoundError } from '../../errors/application-errors';
+import { CartRepository, ProductRepository } from '@domain/repositories';
+import { BadRequestError, NotFoundError } from '@application/errors';
 
 export interface AddToCartInput {
   userId: number;

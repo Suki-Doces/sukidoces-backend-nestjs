@@ -1,8 +1,8 @@
 import { Body, Controller, Post } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
-import { ChatWithAssistantUseCase } from '../../../application/use-cases/chat/chat-with-assistant.use-case';
-import { ChatMessageDto } from '../dto/chat.dto';
-import { successResponse } from '../support/api-response';
+import { ChatWithAssistantUseCase } from '@application/use-cases/chat';
+import { ChatMessageDto } from '@presentation/http/dto';
+import { successResponse } from '@presentation/http/support';
 
 @ApiTags('chat')
 @Controller('chat')

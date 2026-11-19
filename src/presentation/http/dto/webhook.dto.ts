@@ -1,7 +1,7 @@
 import { Expose } from 'class-transformer';
 import { ArrayNotEmpty, IsArray, IsIn, IsUrl } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
-import { DomainEventNames } from '../../../domain/events/domain-events';
+import { DomainEventNames } from '@domain/events';
 
 const VALID_EVENTS = Object.values(DomainEventNames);
 

@@ -1,7 +1,7 @@
 import { Expose, Transform } from 'class-transformer';
 import { IsEmail, IsString, MinLength } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
-import { Sanitize } from '../decorators/sanitize.decorator';
+import { Sanitize } from '@presentation/http/decorators';
 
 const trim = ({ value }: { value: unknown }) => (typeof value === 'string' ? value.trim() : value);
 

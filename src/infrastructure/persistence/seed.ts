@@ -1,6 +1,11 @@
 import * as bcrypt from 'bcrypt';
 import AppDataSource from './data-source';
-import { AdminSchema, CategorySchema, FeatureFlagSchema, ProductSchema } from './schemas/schemas';
+import {
+  AdminSchema,
+  CategorySchema,
+  FeatureFlagSchema,
+  ProductSchema,
+} from '@infrastructure/persistence/schemas';
 
 async function seed() {
   await AppDataSource.initialize();
@@ -14,12 +19,19 @@ async function seed() {
 
   let admin = await admins.findOne({ where: { email: 'admin@sukidoces.com' } });
   if (!admin) {
-    admin = await admins.save(admins.create({ name: 'Suki Doces Admin', email: 'admin@sukidoces.com', password: passwordHash }));
+    admin = await admins.save(
+      admins.create({
+        name: 'Suki Doces Admin',
+        email: 'admin@sukidoces.com',
+        password: passwordHash,
+      }),
+    );
   }
   console.log('Admin seeded:', admin.email);
 
   const findOrCreateCategory = async (name: string, description: string) =>
-    (await categories.findOne({ where: { name } })) ?? categories.save(categories.create({ name, description }));
+    (await categories.findOne({ where: { name } })) ??
+    categories.save(categories.create({ name, description }));
 
   const cakes = await findOrCreateCategory('Bolos', 'Artisan cakes');
   const sweets = await findOrCreateCategory('Doces', 'Assorted sweets');
@@ -47,7 +59,7 @@ async function seed() {
     );
   }
 
-  await flags.upsert({ key: 'webhooks', enabled: false } as any, ['key']);
+  await flags.upsert({ key: 'webhooks', enabled: false }, ['key']);
 
   console.log('Seed completed.');
   await AppDataSource.destroy();

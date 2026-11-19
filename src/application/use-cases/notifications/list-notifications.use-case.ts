@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
-import { Notification } from '../../../domain/entities';
-import { NotificationOwner, NotificationRepository } from '../../../domain/repositories';
-import { buildPagination, clampPagination, Pagination } from '../../common/pagination';
-import { InternalError } from '../../errors/application-errors';
+import { Notification } from '@domain/entities';
+import { NotificationOwner, NotificationRepository } from '@domain/repositories';
+import { buildPagination, clampPagination, Pagination } from '@application/common';
+import { InternalError } from '@application/errors';
 
 @Injectable()
 export class ListNotificationsUseCase {
@@ -16,7 +16,10 @@ export class ListNotificationsUseCase {
     try {
       const { page, limit, skip } = clampPagination(input.page, input.limit, 4);
 
-      const notifications = await this.notifications.findByOwner(input.owner, { take: limit, skip });
+      const notifications = await this.notifications.findByOwner(input.owner, {
+        take: limit,
+        skip,
+      });
       const total = await this.notifications.countByOwner(input.owner);
       const unreadCount = await this.notifications.countByOwner(input.owner, true);
 

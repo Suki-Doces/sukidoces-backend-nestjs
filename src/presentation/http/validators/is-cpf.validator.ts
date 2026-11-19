@@ -26,7 +26,11 @@ export function IsCpf(options?: ValidationOptions) {
       propertyName,
       options,
       validator: {
-        validate: (value: unknown) => value === undefined || value === null || value === '' || (typeof value === 'string' && isValidCpf(value)),
+        validate: (value: unknown) =>
+          value === undefined ||
+          value === null ||
+          value === '' ||
+          (typeof value === 'string' && isValidCpf(value)),
         defaultMessage: () => 'cpf is invalid',
       },
     });

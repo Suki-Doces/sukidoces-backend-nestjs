@@ -1,14 +1,19 @@
 import { createHash } from 'crypto';
 import { LessThanOrEqual, MoreThan, Repository } from 'typeorm';
-import { RefreshTokenStore } from '../../../application/ports';
-import { RefreshSession } from '../../../domain/entities';
+import { RefreshTokenStore } from '@application/ports';
+import { RefreshSession } from '@domain/entities';
 
 export class TypeOrmRefreshTokenStore extends RefreshTokenStore {
   constructor(private readonly sessions: Repository<RefreshSession>) {
     super();
   }
 
-  async register(input: { token: string; userId: number; role: string | null; expiresAt: Date }): Promise<void> {
+  async register(input: {
+    token: string;
+    userId: number;
+    role: string | null;
+    expiresAt: Date;
+  }): Promise<void> {
     await this.sessions.delete({ expiresAt: LessThanOrEqual(new Date()) });
     await this.sessions.save(
       this.sessions.create({
@@ -21,7 +26,10 @@ export class TypeOrmRefreshTokenStore extends RefreshTokenStore {
   }
 
   async consume(token: string): Promise<boolean> {
-    const result = await this.sessions.delete({ tokenHash: this.hash(token), expiresAt: MoreThan(new Date()) });
+    const result = await this.sessions.delete({
+      tokenHash: this.hash(token),
+      expiresAt: MoreThan(new Date()),
+    });
     return !!result.affected;
   }
 

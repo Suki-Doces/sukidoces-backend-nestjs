@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
-import { UserProfile } from '../../../domain/entities';
-import { UserRepository } from '../../../domain/repositories';
-import { NotFoundError } from '../../errors/application-errors';
+import { UserProfile } from '@domain/entities';
+import { UserRepository } from '@domain/repositories';
+import { NotFoundError } from '@application/errors';
 
 @Injectable()
 export class GetUserProfileUseCase {

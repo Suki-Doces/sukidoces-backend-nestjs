@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
-import { ContactMessage } from '../../../domain/entities';
-import { ContactMessageRepository } from '../../../domain/repositories';
-import { InternalError } from '../../errors/application-errors';
+import { ContactMessage } from '@domain/entities';
+import { ContactMessageRepository } from '@domain/repositories';
+import { InternalError } from '@application/errors';
 
 @Injectable()
 export class ListContactMessagesUseCase {

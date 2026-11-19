@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { WebhookRepository } from '../../../domain/repositories';
-import { NotFoundError } from '../../errors/application-errors';
+import { WebhookRepository } from '@domain/repositories';
+import { NotFoundError } from '@application/errors';
 
 @Injectable()
 export class DeleteWebhookUseCase {

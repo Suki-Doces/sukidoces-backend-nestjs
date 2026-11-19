@@ -1,12 +1,17 @@
 import { Repository } from 'typeorm';
-import { Notification } from '../../../domain/entities';
-import { NotificationOwner, NotificationRepository } from '../../../domain/repositories';
+import { Notification } from '@domain/entities';
+import { NotificationOwner, NotificationRepository } from '@domain/repositories';
 
 export class TypeOrmNotificationRepository implements NotificationRepository {
   constructor(private readonly repo: Repository<Notification>) {}
 
   findByOwner(owner: NotificationOwner, params: { take: number; skip: number }) {
-    return this.repo.find({ where: owner, order: { createdAt: 'DESC' }, take: params.take, skip: params.skip });
+    return this.repo.find({
+      where: owner,
+      order: { createdAt: 'DESC' },
+      take: params.take,
+      skip: params.skip,
+    });
   }
 
   countByOwner(owner: NotificationOwner, unreadOnly = false) {

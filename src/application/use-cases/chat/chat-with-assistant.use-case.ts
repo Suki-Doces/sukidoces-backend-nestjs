@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
-import { CouponRepository, ProductRepository } from '../../../domain/repositories';
-import { InternalError } from '../../errors/application-errors';
-import { AppLogger, ChatAssistant } from '../../ports';
+import { CouponRepository, ProductRepository } from '@domain/repositories';
+import { InternalError } from '@application/errors';
+import { AppLogger, ChatAssistant } from '@application/ports';
 
 export interface ChatInput {
   message: string;
@@ -20,11 +20,16 @@ export class ChatWithAssistantUseCase {
   async execute(input: ChatInput): Promise<string> {
     try {
       const products = await this.products.findAllBasicInfo();
-      const catalog = products.map((p) => `- ${p.name} (ID: ${p.id}, Price: R$ ${p.price})`).join('\n');
+      const catalog = products
+        .map((p) => `- ${p.name} (ID: ${p.id}, Price: R$ ${p.price})`)
+        .join('\n');
 
       const coupons = await this.coupons.findAll();
       const couponList = coupons
-        .map((c) => `- ${c.code} (ID: ${c.id}, Active: ${c.active}, Discount value: ${c.value} of type ${c.type}), Expires: ${c.expiresAt}`)
+        .map(
+          (c) =>
+            `- ${c.code} (ID: ${c.id}, Active: ${c.active}, Discount value: ${c.value} of type ${c.type}), Expires: ${c.expiresAt}`,
+        )
         .join('\n');
 
       const systemInstruction = `You are SukiBot, the sales assistant of Suki Doces.
@@ -45,7 +50,11 @@ AVAILABLE DISCOUNT COUPONS:
 ${couponList}
 `;
 
-      return await this.assistant.reply({ systemInstruction, history: input.history || [], message: input.message });
+      return await this.assistant.reply({
+        systemInstruction,
+        history: input.history || [],
+        message: input.message,
+      });
     } catch (error) {
       this.logger.error('Chat assistant failure', error);
       throw new InternalError('Error processing the message with the AI.');

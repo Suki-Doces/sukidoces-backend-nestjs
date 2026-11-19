@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { allSchemas } from '../src/infrastructure/persistence/schemas/schemas';
+import { allSchemas } from '@infrastructure/persistence/schemas';
 
 /**
  * Uses in-memory SQL.js for local integration runs, or the migrated MySQL

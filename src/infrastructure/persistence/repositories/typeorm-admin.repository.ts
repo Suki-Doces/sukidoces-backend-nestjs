@@ -1,6 +1,6 @@
 import { Repository } from 'typeorm';
-import { Admin } from '../../../domain/entities';
-import { AdminRepository } from '../../../domain/repositories';
+import { Admin } from '@domain/entities';
+import { AdminRepository } from '@domain/repositories';
 
 export class TypeOrmAdminRepository implements AdminRepository {
   constructor(private readonly repo: Repository<Admin>) {}
@@ -23,6 +23,6 @@ export class TypeOrmAdminRepository implements AdminRepository {
   }
 
   async update(id: number, data: Partial<Admin>) {
-    await this.repo.update({ id }, data as any);
+    await this.repo.update({ id }, data);
   }
 }

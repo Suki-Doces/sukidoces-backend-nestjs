@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { OnEvent } from '@nestjs/event-emitter';
-import { DispatchWebhooksUseCase } from '../../application/use-cases/webhooks/dispatch-webhooks.use-case';
-import { DomainEvent, DomainEventNames } from '../../domain/events/domain-events';
+import { DispatchWebhooksUseCase } from '@application/use-cases/webhooks';
+import { DomainEvent, DomainEventNames } from '@domain/events';
 
 /** Forwards every domain event to the registered webhooks (explicit handlers, no wildcard). */
 @Injectable()

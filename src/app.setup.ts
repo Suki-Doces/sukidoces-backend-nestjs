@@ -1,19 +1,24 @@
 import { INestApplication, RequestMethod, ValidationPipe } from '@nestjs/common';
+import type { CorsOptions } from '@nestjs/common/interfaces/external/cors-options.interface';
 
 export function applyCors(app: INestApplication, configuredOrigins?: string): void {
   const allowedOrigins = configuredOrigins
-    ? configuredOrigins.split(',').map((origin) => origin.trim()).filter(Boolean)
+    ? configuredOrigins
+        .split(',')
+        .map((origin) => origin.trim())
+        .filter(Boolean)
     : ['http://localhost:4200', 'http://localhost:3000', 'https://sukidoces.vercel.app'];
 
-  app.enableCors({
-    origin: (origin, callback) => {
+  const corsOptions: CorsOptions = {
+    origin(origin, callback) {
       if (!origin || allowedOrigins.includes(origin)) callback(null, true);
       else callback(new Error('Blocked by CORS policy'), false);
     },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
     allowedHeaders: ['Content-Type', 'Authorization', 'Idempotency-Key'],
-  });
+  };
+  app.enableCors(corsOptions);
 }
 
 /**

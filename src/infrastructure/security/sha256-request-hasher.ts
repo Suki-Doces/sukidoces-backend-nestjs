@@ -1,5 +1,5 @@
 import { createHash } from 'crypto';
-import { RequestHasher } from '../../application/ports';
+import { RequestHasher } from '@application/ports';
 
 export class Sha256RequestHasher extends RequestHasher {
   hash(value: string): string {

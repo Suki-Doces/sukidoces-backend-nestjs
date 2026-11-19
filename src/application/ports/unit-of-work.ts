@@ -1,5 +1,4 @@
-import { OrderRepository } from '../../domain/repositories/order.repository';
-import { ProductRepository } from '../../domain/repositories/product.repository';
+import { OrderRepository, ProductRepository } from '@domain/repositories';
 
 /** Repositories bound to a single database transaction. */
 export interface TransactionContext {

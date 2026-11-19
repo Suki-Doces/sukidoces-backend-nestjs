@@ -1,12 +1,16 @@
 import { Repository } from 'typeorm';
-import { CartItem } from '../../../domain/entities';
-import { CartRepository } from '../../../domain/repositories';
+import { CartItem } from '@domain/entities';
+import { CartRepository } from '@domain/repositories';
 
 export class TypeOrmCartRepository implements CartRepository {
   constructor(private readonly repo: Repository<CartItem>) {}
 
   findByUser(userId: number) {
-    return this.repo.find({ where: { userId }, order: { addedAt: 'DESC' }, relations: ['product'] });
+    return this.repo.find({
+      where: { userId },
+      order: { addedAt: 'DESC' },
+      relations: ['product'],
+    });
   }
 
   findByUserAndProduct(userId: number, productId: number) {

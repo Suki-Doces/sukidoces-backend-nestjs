@@ -1,6 +1,6 @@
 import { Repository } from 'typeorm';
-import { Webhook } from '../../../domain/entities';
-import { WebhookRepository } from '../../../domain/repositories';
+import { Webhook } from '@domain/entities';
+import { WebhookRepository } from '@domain/repositories';
 
 export class TypeOrmWebhookRepository implements WebhookRepository {
   constructor(private readonly repo: Repository<Webhook>) {}

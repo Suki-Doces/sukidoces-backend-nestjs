@@ -1,12 +1,20 @@
 import { Module } from '@nestjs/common';
-import { AnswerContactMessageUseCase } from '../../../application/use-cases/contacts/answer-contact-message.use-case';
-import { CreateContactMessageUseCase } from '../../../application/use-cases/contacts/create-contact-message.use-case';
-import { ListContactMessagesUseCase } from '../../../application/use-cases/contacts/list-contact-messages.use-case';
-import { ListMyContactMessagesUseCase } from '../../../application/use-cases/contacts/list-my-contact-messages.use-case';
-import { AdminContactsController, ContactsController } from '../controllers/contacts.controller';
+import {
+  AnswerContactMessageUseCase,
+  CreateContactMessageUseCase,
+  ListContactMessagesUseCase,
+  ListMyContactMessagesUseCase,
+} from '@application/use-cases/contacts';
+
+import { AdminContactsController, ContactsController } from '@presentation/http/controllers';
 
 @Module({
   controllers: [ContactsController, AdminContactsController],
-  providers: [CreateContactMessageUseCase, ListMyContactMessagesUseCase, ListContactMessagesUseCase, AnswerContactMessageUseCase],
+  providers: [
+    CreateContactMessageUseCase,
+    ListMyContactMessagesUseCase,
+    ListContactMessagesUseCase,
+    AnswerContactMessageUseCase,
+  ],
 })
 export class ContactsModule {}

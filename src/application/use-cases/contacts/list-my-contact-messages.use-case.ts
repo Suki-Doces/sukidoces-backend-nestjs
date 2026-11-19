@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
-import { ContactMessage } from '../../../domain/entities';
-import { UserRole } from '../../../domain/enums';
-import { ContactMessageRepository } from '../../../domain/repositories';
-import { ForbiddenError, InternalError } from '../../errors/application-errors';
+import { ContactMessage } from '@domain/entities';
+import { UserRole } from '@domain/enums';
+import { ContactMessageRepository } from '@domain/repositories';
+import { ForbiddenError, InternalError } from '@application/errors';
 import { Requester } from './create-contact-message.use-case';
 
 @Injectable()

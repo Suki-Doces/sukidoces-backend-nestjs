@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
-import { UserRole } from '../../../domain/enums';
-import { ContactMessageRepository } from '../../../domain/repositories';
-import { InternalError } from '../../errors/application-errors';
+import { UserRole } from '@domain/enums';
+import { ContactMessageRepository } from '@domain/repositories';
+import { InternalError } from '@application/errors';
 
 export interface Requester {
   id: number;

@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
-import { DomainEvent } from '../../../domain/events/domain-events';
-import { WebhookRepository } from '../../../domain/repositories';
-import { WebhookClient } from '../../ports';
+import { DomainEvent } from '@domain/events';
+import { WebhookRepository } from '@domain/repositories';
+import { WebhookClient } from '@application/ports';
 
 @Injectable()
 export class DispatchWebhooksUseCase {
@@ -11,10 +11,14 @@ export class DispatchWebhooksUseCase {
   ) {}
 
   async execute(event: DomainEvent): Promise<void> {
-    const subscribers = (await this.webhooks.findActive()).filter((webhook) => webhook.subscribesTo(event.name));
+    const subscribers = (await this.webhooks.findActive()).filter((webhook) =>
+      webhook.subscribesTo(event.name),
+    );
     if (subscribers.length === 0) return;
 
     const dispatchedAt = new Date();
-    await Promise.all(subscribers.map((webhook) => this.client.post(webhook.url, { event, dispatchedAt })));
+    await Promise.all(
+      subscribers.map((webhook) => this.client.post(webhook.url, { event, dispatchedAt })),
+    );
   }
 }

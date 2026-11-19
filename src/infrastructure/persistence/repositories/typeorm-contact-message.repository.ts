@@ -1,12 +1,12 @@
 import { Repository } from 'typeorm';
-import { ContactMessage } from '../../../domain/entities';
-import { ContactMessageRepository } from '../../../domain/repositories';
+import { ContactMessage } from '@domain/entities';
+import { ContactMessageRepository } from '@domain/repositories';
 
 export class TypeOrmContactMessageRepository implements ContactMessageRepository {
   constructor(private readonly repo: Repository<ContactMessage>) {}
 
   create(data: Partial<ContactMessage>) {
-    return this.repo.save(this.repo.create(data as any)) as unknown as Promise<ContactMessage>;
+    return this.repo.save(this.repo.create(data));
   }
 
   findByUser(userId: number) {

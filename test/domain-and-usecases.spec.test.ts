@@ -1,10 +1,10 @@
-import { CheckoutUseCase } from '../src/application/use-cases/orders/checkout.use-case';
-import { Order } from '../src/domain/entities/order.entity';
-import { Product } from '../src/domain/entities/product.entity';
-import { InsufficientStockError, OrderAlreadyProcessedError } from '../src/domain/errors';
-import { OrderStatus } from '../src/domain/enums';
-import { CouponRepository, OrderRepository, ProductRepository } from '../src/domain/repositories';
-import { EventPublisher, RequestHasher, TransactionContext, UnitOfWork } from '../src/application/ports';
+import { CheckoutUseCase } from '@application/use-cases/orders';
+import { Order, Product } from '@domain/entities';
+
+import { InsufficientStockError, OrderAlreadyProcessedError } from '@domain/errors';
+import { OrderStatus } from '@domain/enums';
+import { CouponRepository, OrderRepository, ProductRepository } from '@domain/repositories';
+import { EventPublisher, RequestHasher, TransactionContext, UnitOfWork } from '@application/ports';
 
 describe('domain entities', () => {
   it('prevents stock from becoming negative', () => {
@@ -29,9 +29,13 @@ describe('CheckoutUseCase', () => {
   it('persists and reuses an idempotency key without decrementing stock twice', async () => {
     let savedOrder: Order | null = null;
     const products = {
-      findManyByIds: jest.fn().mockResolvedValue([new Product({ id: 3, name: 'Bolo', quantity: 5, price: 10 })]),
+      findManyByIds: jest
+        .fn()
+        .mockResolvedValue([new Product({ id: 3, name: 'Bolo', quantity: 5, price: 10 })]),
     } as unknown as ProductRepository;
-    const coupons = { findByCode: jest.fn().mockResolvedValue(null) } as unknown as CouponRepository;
+    const coupons = {
+      findByCode: jest.fn().mockResolvedValue(null),
+    } as unknown as CouponRepository;
     const orders = {
       findByIdempotencyKey: jest.fn().mockImplementation(async () => savedOrder),
     } as unknown as OrderRepository;
@@ -41,15 +45,25 @@ describe('CheckoutUseCase', () => {
         return order;
       }),
     } as unknown as OrderRepository;
-    const transactionProducts = { decreaseStock: jest.fn().mockResolvedValue(undefined) } as unknown as ProductRepository;
+    const transactionProducts = {
+      decreaseStock: jest.fn().mockResolvedValue(undefined),
+    } as unknown as ProductRepository;
     const unitOfWork = {
       run: jest.fn(<T>(work: (context: TransactionContext) => Promise<T>) =>
-        work({ orders: transactionOrders, products: transactionProducts })),
+        work({ orders: transactionOrders, products: transactionProducts }),
+      ),
     } as unknown as UnitOfWork;
     const events = { publish: jest.fn() } as unknown as EventPublisher;
     const requestHasher = { hash: jest.fn((value: string) => value) } as unknown as RequestHasher;
 
-    const checkout = new CheckoutUseCase(products, coupons, orders, unitOfWork, events, requestHasher);
+    const checkout = new CheckoutUseCase(
+      products,
+      coupons,
+      orders,
+      unitOfWork,
+      events,
+      requestHasher,
+    );
     const input = {
       userId: 7,
       items: [{ productId: 3, quantity: 2 }],
@@ -75,7 +89,9 @@ describe('CheckoutUseCase', () => {
       idempotencyKey: 'checkout-123',
       requestHash: 'different-request-hash',
     });
-    const orders = { findByIdempotencyKey: jest.fn().mockResolvedValue(savedOrder) } as unknown as OrderRepository;
+    const orders = {
+      findByIdempotencyKey: jest.fn().mockResolvedValue(savedOrder),
+    } as unknown as OrderRepository;
     const checkout = new CheckoutUseCase(
       {} as ProductRepository,
       {} as CouponRepository,

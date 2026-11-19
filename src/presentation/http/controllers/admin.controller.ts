@@ -1,13 +1,12 @@
 import { Body, Controller, Get, HttpCode, Post, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
-import { LoginUseCase } from '../../../application/use-cases/auth/login.use-case';
-import { GetDashboardUseCase } from '../../../application/use-cases/admin/get-dashboard.use-case';
-import { LoginDto } from '../dto/auth.dto';
-import { AdminGuard } from '../guards/admin.guard';
-import { JwtAuthGuard } from '../guards/jwt-auth.guard';
-import { successResponse } from '../support/api-response';
-import { presentDashboard, presentSession } from '../support/presenters';
+import { LoginUseCase } from '@application/use-cases/auth';
+import { GetDashboardUseCase } from '@application/use-cases/admin';
+import { LoginDto } from '@presentation/http/dto';
+import { AdminGuard, JwtAuthGuard } from '@presentation/http/guards';
+
+import { successResponse, presentDashboard, presentSession } from '@presentation/http/support';
 
 @ApiTags('admin')
 @Controller('admin')
@@ -30,6 +29,9 @@ export class AdminController {
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Sales metrics and summary for the admin panel' })
   async dashboard() {
-    return successResponse('Dashboard loaded successfully', presentDashboard(await this.getDashboard.execute()));
+    return successResponse(
+      'Dashboard loaded successfully',
+      presentDashboard(await this.getDashboard.execute()),
+    );
   }
 }

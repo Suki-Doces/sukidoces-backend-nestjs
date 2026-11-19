@@ -41,5 +41,8 @@ function parseTrustProxy(value?: string): boolean | number | string[] {
   if (setting === 'true') return true;
   if (setting === 'false') return false;
   if (/^\d+$/.test(setting)) return Number(setting);
-  return setting.split(',').map((entry) => entry.trim()).filter(Boolean);
+  return setting
+    .split(',')
+    .map((entry) => entry.trim())
+    .filter(Boolean);
 }

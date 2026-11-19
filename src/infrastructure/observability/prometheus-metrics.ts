@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import * as client from 'prom-client';
-import { Metrics } from '../../application/ports/metrics';
+import { Metrics } from '@application/ports';
 
 @Injectable()
 export class PrometheusMetrics extends Metrics {
@@ -28,7 +28,12 @@ export class PrometheusMetrics extends Metrics {
     this.contentType = this.registry.contentType;
   }
 
-  recordHttpRequest(method: string, route: string, statusCode: number, durationSeconds: number): void {
+  recordHttpRequest(
+    method: string,
+    route: string,
+    statusCode: number,
+    durationSeconds: number,
+  ): void {
     const labels = { method, route, status_code: String(statusCode) };
     this.requestDuration.observe(labels, durationSeconds);
     this.requestsTotal.inc(labels);

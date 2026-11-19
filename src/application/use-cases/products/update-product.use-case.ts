@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
-import { Product } from '../../../domain/entities';
-import { ProductRepository } from '../../../domain/repositories';
-import { NotFoundError } from '../../errors/application-errors';
-import { ImageStorage } from '../../ports';
+import { Product } from '@domain/entities';
+import { ProductRepository } from '@domain/repositories';
+import { NotFoundError } from '@application/errors';
+import { ImageStorage } from '@application/ports';
 
 export interface UpdateProductInput {
   id: number;

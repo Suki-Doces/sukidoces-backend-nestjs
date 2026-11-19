@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { AppLogger } from '../../application/ports/app-logger';
+import { AppLogger } from '@application/ports';
 
 @Injectable()
 export class NestAppLogger extends AppLogger {

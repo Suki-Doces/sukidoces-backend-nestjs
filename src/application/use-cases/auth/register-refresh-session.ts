@@ -1,4 +1,4 @@
-import { RefreshTokenStore, TokenPair, TokenPayload, TokenService } from '../../ports';
+import { RefreshTokenStore, TokenPair, TokenPayload, TokenService } from '@application/ports';
 
 export async function registerRefreshSession(
   tokens: TokenService,

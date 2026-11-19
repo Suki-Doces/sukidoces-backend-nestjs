@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { CartRepository } from '../../../domain/repositories';
-import { BadRequestError, ForbiddenError } from '../../errors/application-errors';
+import { CartRepository } from '@domain/repositories';
+import { BadRequestError, ForbiddenError } from '@application/errors';
 
 @Injectable()
 export class UpdateCartItemQuantityUseCase {

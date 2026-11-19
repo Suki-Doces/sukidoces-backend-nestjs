@@ -1,8 +1,11 @@
 import { Module } from '@nestjs/common';
-import { CreateWebhookUseCase } from '../../../application/use-cases/webhooks/create-webhook.use-case';
-import { DeleteWebhookUseCase } from '../../../application/use-cases/webhooks/delete-webhook.use-case';
-import { ListWebhooksUseCase } from '../../../application/use-cases/webhooks/list-webhooks.use-case';
-import { WebhooksController } from '../controllers/webhooks.controller';
+import {
+  CreateWebhookUseCase,
+  DeleteWebhookUseCase,
+  ListWebhooksUseCase,
+} from '@application/use-cases/webhooks';
+
+import { WebhooksController } from '@presentation/http/controllers';
 import { FeatureFlagsModule } from './feature-flags.module';
 
 @Module({

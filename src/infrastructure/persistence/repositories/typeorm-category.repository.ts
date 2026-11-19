@@ -1,6 +1,6 @@
 import { Repository } from 'typeorm';
-import { Category } from '../../../domain/entities';
-import { CategoryRepository } from '../../../domain/repositories';
+import { Category } from '@domain/entities';
+import { CategoryRepository } from '@domain/repositories';
 
 export class TypeOrmCategoryRepository implements CategoryRepository {
   constructor(private readonly repo: Repository<Category>) {}
@@ -22,7 +22,7 @@ export class TypeOrmCategoryRepository implements CategoryRepository {
   }
 
   async update(id: number, data: Partial<Category>) {
-    await this.repo.update({ id }, data as any);
+    await this.repo.update({ id }, data);
     return this.findById(id);
   }
 

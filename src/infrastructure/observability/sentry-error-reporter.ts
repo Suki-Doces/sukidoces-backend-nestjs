@@ -1,8 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as Sentry from '@sentry/node';
-import { AppLogger } from '../../application/ports/app-logger';
-import { ErrorReporter } from '../../application/ports/error-reporter';
+import { AppLogger, ErrorReporter } from '@application/ports';
 
 /** Inert unless SENTRY_DSN is set. */
 @Injectable()
@@ -14,7 +13,11 @@ export class SentryErrorReporter extends ErrorReporter {
       logger.log('SENTRY_DSN not set: error reporting to Sentry is disabled.');
       return;
     }
-    Sentry.init({ dsn, environment: config.get<string>('NODE_ENV') || 'development', tracesSampleRate: 0.1 });
+    Sentry.init({
+      dsn,
+      environment: config.get<string>('NODE_ENV') || 'development',
+      tracesSampleRate: 0.1,
+    });
     logger.log('Sentry initialized.');
   }
 

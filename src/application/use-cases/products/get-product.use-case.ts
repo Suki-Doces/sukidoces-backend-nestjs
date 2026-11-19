@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
-import { Product } from '../../../domain/entities';
-import { ProductRepository } from '../../../domain/repositories';
-import { BadRequestError, NotFoundError } from '../../errors/application-errors';
+import { Product } from '@domain/entities';
+import { ProductRepository } from '@domain/repositories';
+import { BadRequestError, NotFoundError } from '@application/errors';
 
 @Injectable()
 export class GetProductUseCase {

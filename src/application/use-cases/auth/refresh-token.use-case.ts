@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
-import { UserRole } from '../../../domain/enums';
-import { UserRepository } from '../../../domain/repositories';
-import { UnauthorizedError } from '../../errors/application-errors';
-import { RefreshTokenStore, TokenClaims, TokenPair, TokenService } from '../../ports';
+import { UserRole } from '@domain/enums';
+import { UserRepository } from '@domain/repositories';
+import { UnauthorizedError } from '@application/errors';
+import { RefreshTokenStore, TokenClaims, TokenPair, TokenService } from '@application/ports';
 import { registerRefreshSession } from './register-refresh-session';
 
 @Injectable()

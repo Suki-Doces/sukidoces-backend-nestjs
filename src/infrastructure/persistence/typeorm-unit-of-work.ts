@@ -1,9 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { DataSource } from 'typeorm';
-import { TransactionContext, UnitOfWork } from '../../application/ports/unit-of-work';
-import { OrderItemSchema, OrderSchema, ProductSchema } from './schemas/schemas';
-import { TypeOrmOrderRepository } from './repositories/typeorm-order.repository';
-import { TypeOrmProductRepository } from './repositories/typeorm-product.repository';
+import { TransactionContext, UnitOfWork } from '@application/ports';
+import { OrderItemSchema, OrderSchema, ProductSchema } from '@infrastructure/persistence/schemas';
+import {
+  TypeOrmOrderRepository,
+  TypeOrmProductRepository,
+} from '@infrastructure/persistence/repositories';
 
 @Injectable()
 export class TypeOrmUnitOfWork extends UnitOfWork {
@@ -14,7 +16,10 @@ export class TypeOrmUnitOfWork extends UnitOfWork {
   run<T>(work: (context: TransactionContext) => Promise<T>): Promise<T> {
     return this.dataSource.transaction((manager) =>
       work({
-        orders: new TypeOrmOrderRepository(manager.getRepository(OrderSchema), manager.getRepository(OrderItemSchema)),
+        orders: new TypeOrmOrderRepository(
+          manager.getRepository(OrderSchema),
+          manager.getRepository(OrderItemSchema),
+        ),
         products: new TypeOrmProductRepository(manager.getRepository(ProductSchema)),
       }),
     );

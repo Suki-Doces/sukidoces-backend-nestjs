@@ -1,4 +1,4 @@
-import { ProbeResult } from '../../domain/health/health-report';
+import { ProbeResult } from '@domain/health';
 
 export interface HealthProbe {
   readonly name: string;

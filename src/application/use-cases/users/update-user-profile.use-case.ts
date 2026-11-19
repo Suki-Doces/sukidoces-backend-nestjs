@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
-import { User, UserProfile } from '../../../domain/entities';
-import { UserRepository } from '../../../domain/repositories';
-import { ImageStorage } from '../../ports';
+import { User, UserProfile } from '@domain/entities';
+import { UserRepository } from '@domain/repositories';
+import { ImageStorage } from '@application/ports';
 
 export interface UpdateUserProfileInput {
   userId: number;
@@ -32,7 +32,9 @@ export class UpdateUserProfileUseCase {
       ...(input.phone !== undefined && { phone: input.phone }),
       ...(input.cpf !== undefined && { cpf: input.cpf }),
       ...(addresses !== undefined && { addresses }),
-      ...(input.birthDate !== undefined && { birthDate: input.birthDate ? new Date(input.birthDate) : null }),
+      ...(input.birthDate !== undefined && {
+        birthDate: input.birthDate ? new Date(input.birthDate) : null,
+      }),
     };
 
     if (input.photo) {

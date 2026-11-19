@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { Product } from '../../../domain/entities';
-import { OrderRepository, ProductRepository } from '../../../domain/repositories';
+import { Product } from '@domain/entities';
+import { OrderRepository, ProductRepository } from '@domain/repositories';
 
 @Injectable()
 export class GetBestSellersUseCase {
@@ -19,7 +19,9 @@ export class GetBestSellersUseCase {
 
     const ids = bestSelling.map((item) => item.productId);
     const found = await this.products.findActiveByIds(ids);
-    const ordered = ids.map((id) => found.find((product) => product.id === id)).filter(Boolean);
+    const ordered = ids
+      .map((id) => found.find((product) => product.id === id))
+      .filter((product): product is Product => product !== undefined);
     return { featured: false, products: ordered };
   }
 }

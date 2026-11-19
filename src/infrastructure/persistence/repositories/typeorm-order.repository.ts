@@ -1,6 +1,6 @@
 import { Repository } from 'typeorm';
-import { Order, OrderItem } from '../../../domain/entities';
-import { NewOrderItem, OrderAggregateCriteria, OrderRepository } from '../../../domain/repositories';
+import { Order, OrderItem } from '@domain/entities';
+import { NewOrderItem, OrderAggregateCriteria, OrderRepository } from '@domain/repositories';
 
 export class TypeOrmOrderRepository implements OrderRepository {
   constructor(
@@ -21,7 +21,10 @@ export class TypeOrmOrderRepository implements OrderRepository {
   }
 
   findAllWithDetails() {
-    return this.orders.find({ order: { createdAt: 'DESC' }, relations: ['user', 'items', 'items.product'] });
+    return this.orders.find({
+      order: { createdAt: 'DESC' },
+      relations: ['user', 'items', 'items.product'],
+    });
   }
 
   findByUser(userId: number) {
@@ -39,7 +42,8 @@ export class TypeOrmOrderRepository implements OrderRepository {
   async aggregate(criteria: OrderAggregateCriteria) {
     const query = this.orders.createQueryBuilder('order').where('1 = 1');
 
-    if (criteria.statuses) query.andWhere('order.status IN (:...statuses)', { statuses: criteria.statuses });
+    if (criteria.statuses)
+      query.andWhere('order.status IN (:...statuses)', { statuses: criteria.statuses });
     if (criteria.status) query.andWhere('order.status = :status', { status: criteria.status });
     if (criteria.from) query.andWhere('order.createdAt >= :from', { from: criteria.from });
     if (criteria.to) query.andWhere('order.createdAt < :to', { to: criteria.to });
@@ -66,7 +70,10 @@ export class TypeOrmOrderRepository implements OrderRepository {
       .limit(take)
       .getRawMany();
 
-    return rows.map((row) => ({ productId: Number(row.productId), totalQuantity: Number(row.total) }));
+    return rows.map((row) => ({
+      productId: Number(row.productId),
+      totalQuantity: Number(row.total),
+    }));
   }
 
   async createWithItems(order: Order, items: NewOrderItem[]) {

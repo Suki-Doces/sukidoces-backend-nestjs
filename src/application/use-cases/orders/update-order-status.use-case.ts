@@ -1,10 +1,10 @@
 import { Injectable } from '@nestjs/common';
-import { Order } from '../../../domain/entities';
-import { OrderStatus } from '../../../domain/enums';
-import { OrderStatusUpdatedEvent } from '../../../domain/events/domain-events';
-import { OrderRepository, ProductRepository } from '../../../domain/repositories';
-import { InternalError, NotFoundError } from '../../errors/application-errors';
-import { EventPublisher } from '../../ports';
+import { Order } from '@domain/entities';
+import { OrderStatus } from '@domain/enums';
+import { OrderStatusUpdatedEvent } from '@domain/events';
+import { OrderRepository, ProductRepository } from '@domain/repositories';
+import { InternalError, NotFoundError } from '@application/errors';
+import { EventPublisher } from '@application/ports';
 
 /** Admin action: moves an order to any status, adjusting stock when it is cancelled or reopened. */
 @Injectable()

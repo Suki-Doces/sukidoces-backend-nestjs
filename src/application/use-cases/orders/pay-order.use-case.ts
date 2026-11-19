@@ -1,9 +1,9 @@
 import { Injectable } from '@nestjs/common';
-import { Order } from '../../../domain/entities';
-import { OrderPaidEvent } from '../../../domain/events/domain-events';
-import { OrderRepository } from '../../../domain/repositories';
-import { InternalError, NotFoundError } from '../../errors/application-errors';
-import { EventPublisher } from '../../ports';
+import { Order } from '@domain/entities';
+import { OrderPaidEvent } from '@domain/events';
+import { OrderRepository } from '@domain/repositories';
+import { InternalError, NotFoundError } from '@application/errors';
+import { EventPublisher } from '@application/ports';
 
 @Injectable()
 export class PayOrderUseCase {

@@ -1,9 +1,9 @@
 import { Injectable } from '@nestjs/common';
-import { UserProfile } from '../../../domain/entities';
-import { UserRole } from '../../../domain/enums';
-import { UserRepository } from '../../../domain/repositories';
-import { InternalError } from '../../errors/application-errors';
-import { PasswordHasher } from '../../ports';
+import { UserProfile } from '@domain/entities';
+import { UserRole } from '@domain/enums';
+import { UserRepository } from '@domain/repositories';
+import { InternalError } from '@application/errors';
+import { PasswordHasher } from '@application/ports';
 
 @Injectable()
 export class CreateCustomerUseCase {
@@ -12,7 +12,12 @@ export class CreateCustomerUseCase {
     private readonly hasher: PasswordHasher,
   ) {}
 
-  async execute(input: { name: string; email: string; password: string; active: boolean }): Promise<UserProfile> {
+  async execute(input: {
+    name: string;
+    email: string;
+    password: string;
+    active: boolean;
+  }): Promise<UserProfile> {
     try {
       const customer = await this.users.create({
         name: input.name,

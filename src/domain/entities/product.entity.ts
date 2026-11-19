@@ -1,4 +1,4 @@
-import { InsufficientStockError } from '../errors';
+import { InsufficientStockError } from '@domain/errors';
 import type { Category } from './category.entity';
 
 export class Product {

@@ -1,14 +1,26 @@
-import { Body, Controller, Delete, Get, Param, ParseIntPipe, Post, Put, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  ParseIntPipe,
+  Post,
+  Put,
+  UseGuards,
+} from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
-import { CreateCategoryUseCase } from '../../../application/use-cases/categories/create-category.use-case';
-import { DeleteCategoryUseCase } from '../../../application/use-cases/categories/delete-category.use-case';
-import { ListCategoriesUseCase } from '../../../application/use-cases/categories/list-categories.use-case';
-import { UpdateCategoryUseCase } from '../../../application/use-cases/categories/update-category.use-case';
-import { CreateCategoryDto, UpdateCategoryDto } from '../dto/category.dto';
-import { AdminGuard } from '../guards/admin.guard';
-import { JwtAuthGuard } from '../guards/jwt-auth.guard';
-import { successResponse } from '../support/api-response';
-import { presentCategory } from '../support/presenters';
+import {
+  CreateCategoryUseCase,
+  DeleteCategoryUseCase,
+  ListCategoriesUseCase,
+  UpdateCategoryUseCase,
+} from '@application/use-cases/categories';
+
+import { CreateCategoryDto, UpdateCategoryDto } from '@presentation/http/dto';
+import { AdminGuard, JwtAuthGuard } from '@presentation/http/guards';
+
+import { successResponse, presentCategory } from '@presentation/http/support';
 
 @ApiTags('categories')
 @Controller('admin/categorias')
@@ -23,18 +35,27 @@ export class CategoriesController {
 
   @Get()
   async list() {
-    return successResponse('Categories loaded successfully', (await this.listCategories.execute()).map(presentCategory));
+    return successResponse(
+      'Categories loaded successfully',
+      (await this.listCategories.execute()).map(presentCategory),
+    );
   }
 
   @Post()
   async create(@Body() dto: CreateCategoryDto) {
-    return successResponse('Category created successfully', presentCategory(await this.createCategory.execute(dto)));
+    return successResponse(
+      'Category created successfully',
+      presentCategory(await this.createCategory.execute(dto)),
+    );
   }
 
   @Put(':id')
   async update(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateCategoryDto) {
     const category = await this.updateCategory.execute(id, dto);
-    return successResponse('Category updated successfully', category ? presentCategory(category) : null);
+    return successResponse(
+      'Category updated successfully',
+      category ? presentCategory(category) : null,
+    );
   }
 
   @Delete(':id')

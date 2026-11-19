@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { AdminRepository, NotificationRepository } from '../../../domain/repositories';
-import { AppLogger } from '../../ports';
+import { AdminRepository, NotificationRepository } from '@domain/repositories';
+import { AppLogger } from '@application/ports';
 
 /** Best effort: a failed notification must never break the business operation that triggered it. */
 @Injectable()

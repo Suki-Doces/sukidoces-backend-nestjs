@@ -1,8 +1,7 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { v2 as cloudinary } from 'cloudinary';
-import { ImageStorage } from '../../application/ports/image-storage';
-import { AppLogger } from '../../application/ports/app-logger';
+import { ImageStorage, AppLogger } from '@application/ports';
 
 const REQUIRED_SETTINGS = ['CLOUDINARY_CLOUD_NAME', 'CLOUDINARY_API_KEY', 'CLOUDINARY_API_SECRET'];
 
@@ -39,7 +38,19 @@ export class CloudinaryImageStorage extends ImageStorage implements OnModuleInit
         {
           folder: 'ecommerce/produtos',
           resource_type: 'image',
-          allowed_formats: ['jpg', 'jpeg', 'png', 'webp', 'gif', 'avif', 'svg', 'heic', 'tiff', 'bmp', 'ico'],
+          allowed_formats: [
+            'jpg',
+            'jpeg',
+            'png',
+            'webp',
+            'gif',
+            'avif',
+            'svg',
+            'heic',
+            'tiff',
+            'bmp',
+            'ico',
+          ],
         },
         (error, result) => {
           if (error) {

@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
-import { Product } from '../../../domain/entities';
-import { ProductRepository, ProductSearchCriteria, ProductSort } from '../../../domain/repositories';
-import { buildPagination, clampPagination, Pagination } from '../../common/pagination';
+import { Product } from '@domain/entities';
+import { ProductRepository, ProductSearchCriteria, ProductSort } from '@domain/repositories';
+import { buildPagination, clampPagination, Pagination } from '@application/common';
 
 export interface ListProductsInput {
   category?: string;
@@ -25,7 +25,9 @@ export class ListProductsUseCase {
   constructor(private readonly products: ProductRepository) {}
 
   /** Only the admin listing is paginated (opted in with isAdmin). */
-  async execute(input: ListProductsInput): Promise<{ products: Product[]; pagination?: Pagination }> {
+  async execute(
+    input: ListProductsInput,
+  ): Promise<{ products: Product[]; pagination?: Pagination }> {
     const criteria: ProductSearchCriteria = {};
     if (input.category) criteria.categoryId = parseInt(input.category, 10);
     if (input.query) criteria.nameContains = input.query;

@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { allSchemas } from './schemas/schemas';
+import { allSchemas } from '@infrastructure/persistence/schemas';
 
 // synchronize is always false: schema changes go through explicit migrations.
 @Module({

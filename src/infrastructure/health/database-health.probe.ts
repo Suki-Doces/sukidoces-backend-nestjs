@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { DataSource } from 'typeorm';
-import { HealthProbe } from '../../application/ports/health-probe';
-import { ProbeResult } from '../../domain/health/health-report';
+import { HealthProbe } from '@application/ports';
+import { ProbeResult } from '@domain/health';
 
 @Injectable()
 export class DatabaseHealthProbe implements HealthProbe {
@@ -15,7 +15,11 @@ export class DatabaseHealthProbe implements HealthProbe {
       await this.dataSource.query('SELECT 1');
       return { status: 'up', responseTimeMs: Date.now() - startedAt };
     } catch (error) {
-      return { status: 'down', responseTimeMs: Date.now() - startedAt, details: { error: (error as Error).message } };
+      return {
+        status: 'down',
+        responseTimeMs: Date.now() - startedAt,
+        details: { error: (error as Error).message },
+      };
     }
   }
 }

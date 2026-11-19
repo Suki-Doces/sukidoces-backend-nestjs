@@ -1,9 +1,14 @@
 import { Injectable } from '@nestjs/common';
-import { Order } from '../../../domain/entities';
-import { OrderCreatedEvent } from '../../../domain/events/domain-events';
-import { CouponRepository, NewOrderItem, OrderRepository, ProductRepository } from '../../../domain/repositories';
-import { BadRequestError, InternalError, NotFoundError } from '../../errors/application-errors';
-import { EventPublisher, RequestHasher, UnitOfWork } from '../../ports';
+import { Order } from '@domain/entities';
+import { OrderCreatedEvent } from '@domain/events';
+import {
+  CouponRepository,
+  NewOrderItem,
+  OrderRepository,
+  ProductRepository,
+} from '@domain/repositories';
+import { BadRequestError, InternalError, NotFoundError } from '@application/errors';
+import { EventPublisher, RequestHasher, UnitOfWork } from '@application/ports';
 
 export interface CheckoutInput {
   userId: number;
@@ -37,12 +42,18 @@ export class CheckoutUseCase {
     }
 
     const requestHash = this.requestHasher.hash(
-      JSON.stringify({ items, paymentMethod, couponCode: couponCode?.trim().toUpperCase() ?? null }),
+      JSON.stringify({
+        items,
+        paymentMethod,
+        couponCode: couponCode?.trim().toUpperCase() ?? null,
+      }),
     );
     const existing = await this.orders.findByIdempotencyKey(userId, idempotencyKey);
     if (existing) {
       if (existing.requestHash !== requestHash) {
-        throw new BadRequestError('Idempotency-Key has already been used with a different checkout request');
+        throw new BadRequestError(
+          'Idempotency-Key has already been used with a different checkout request',
+        );
       }
       return existing;
     }
@@ -62,7 +73,11 @@ export class CheckoutUseCase {
       product.decreaseStock(item.quantity);
 
       subtotal += product.subtotalFor(item.quantity);
-      orderItems.push({ productId: item.productId, quantity: item.quantity, unitPrice: Number(product.price) });
+      orderItems.push({
+        productId: item.productId,
+        quantity: item.quantity,
+        unitPrice: Number(product.price),
+      });
     }
 
     // 2) Optional discount coupon.
@@ -78,30 +93,45 @@ export class CheckoutUseCase {
     }
 
     const totalAmount = Math.max(0, subtotal - discount);
-    const order = Order.place({ userId, totalAmount, paymentMethod, couponId, idempotencyKey, requestHash });
+    const order = Order.place({
+      userId,
+      totalAmount,
+      paymentMethod,
+      couponId,
+      idempotencyKey,
+      requestHash,
+    });
 
     // 3) Atomic persistence: order + items + stock decrement in one transaction.
     //    The decrement is `quantity = quantity - N`, so concurrent checkouts cannot overwrite each other.
     try {
-      const created = await this.unitOfWork.run(async ({ orders, products: transactionalProducts }) => {
-        const saved = await orders.createWithItems(order, orderItems);
-        for (const item of orderItems) {
-          await transactionalProducts.decreaseStock(item.productId, item.quantity);
-        }
-        return saved;
-      });
+      const created = await this.unitOfWork.run(
+        async ({ orders, products: transactionalProducts }) => {
+          const saved = await orders.createWithItems(order, orderItems);
+          for (const item of orderItems) {
+            await transactionalProducts.decreaseStock(item.productId, item.quantity);
+          }
+          return saved;
+        },
+      );
 
       this.events.publish(new OrderCreatedEvent(created.id, totalAmount));
       return created;
     } catch (error) {
-      const driverError = error instanceof Error && 'driverError' in error
-        ? (error as Error & { driverError?: { code?: string } }).driverError
-        : undefined;
-      if (driverError?.code === 'ER_DUP_ENTRY' || driverError?.code === 'SQLITE_CONSTRAINT_UNIQUE') {
+      const driverError =
+        error instanceof Error && 'driverError' in error
+          ? (error as Error & { driverError?: { code?: string } }).driverError
+          : undefined;
+      if (
+        driverError?.code === 'ER_DUP_ENTRY' ||
+        driverError?.code === 'SQLITE_CONSTRAINT_UNIQUE'
+      ) {
         const racedOrder = await this.orders.findByIdempotencyKey(userId, idempotencyKey);
         if (racedOrder) {
           if (racedOrder.requestHash !== requestHash) {
-            throw new BadRequestError('Idempotency-Key has already been used with a different checkout request');
+            throw new BadRequestError(
+              'Idempotency-Key has already been used with a different checkout request',
+            );
           }
           return racedOrder;
         }

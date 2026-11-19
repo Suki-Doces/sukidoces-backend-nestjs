@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { NotificationOwner, NotificationRepository } from '../../../domain/repositories';
-import { InternalError } from '../../errors/application-errors';
+import { NotificationOwner, NotificationRepository } from '@domain/repositories';
+import { InternalError } from '@application/errors';
 
 @Injectable()
 export class MarkAllNotificationsReadUseCase {

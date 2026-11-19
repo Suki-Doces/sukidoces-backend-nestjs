@@ -1,6 +1,6 @@
 import { In, Repository, SelectQueryBuilder } from 'typeorm';
-import { Product } from '../../../domain/entities';
-import { ProductRepository, ProductSearchCriteria, ProductSort } from '../../../domain/repositories';
+import { Product } from '@domain/entities';
+import { ProductRepository, ProductSearchCriteria, ProductSort } from '@domain/repositories';
 
 export class TypeOrmProductRepository implements ProductRepository {
   constructor(private readonly repo: Repository<Product>) {}
@@ -18,7 +18,12 @@ export class TypeOrmProductRepository implements ProductRepository {
   }
 
   findActiveFeatured(take: number) {
-    return this.repo.find({ where: { active: true }, take, order: { id: 'DESC' }, relations: ['category'] });
+    return this.repo.find({
+      where: { active: true },
+      take,
+      order: { id: 'DESC' },
+      relations: ['category'],
+    });
   }
 
   findActiveByIds(ids: number[]) {
@@ -36,8 +41,13 @@ export class TypeOrmProductRepository implements ProductRepository {
       .getMany();
   }
 
-  search(criteria: ProductSearchCriteria, options: { sort?: ProductSort; take?: number; skip?: number }) {
-    const query = this.repo.createQueryBuilder('product').leftJoinAndSelect('product.category', 'category');
+  search(
+    criteria: ProductSearchCriteria,
+    options: { sort?: ProductSort; take?: number; skip?: number },
+  ) {
+    const query = this.repo
+      .createQueryBuilder('product')
+      .leftJoinAndSelect('product.category', 'category');
     this.applyCriteria(query, criteria);
 
     if (options.sort === 'newest') query.orderBy('product.createdAt', 'DESC');
@@ -57,18 +67,22 @@ export class TypeOrmProductRepository implements ProductRepository {
 
   private applyCriteria(query: SelectQueryBuilder<Product>, criteria: ProductSearchCriteria) {
     query.where('product.active = :active', { active: true });
-    if (criteria.categoryId !== undefined) query.andWhere('product.categoryId = :categoryId', { categoryId: criteria.categoryId });
-    if (criteria.nameContains !== undefined) query.andWhere('product.name LIKE :name', { name: `%${criteria.nameContains}%` });
-    if (criteria.minPrice !== undefined) query.andWhere('product.price >= :minPrice', { minPrice: criteria.minPrice });
-    if (criteria.maxPrice !== undefined) query.andWhere('product.price <= :maxPrice', { maxPrice: criteria.maxPrice });
+    if (criteria.categoryId !== undefined)
+      query.andWhere('product.categoryId = :categoryId', { categoryId: criteria.categoryId });
+    if (criteria.nameContains !== undefined)
+      query.andWhere('product.name LIKE :name', { name: `%${criteria.nameContains}%` });
+    if (criteria.minPrice !== undefined)
+      query.andWhere('product.price >= :minPrice', { minPrice: criteria.minPrice });
+    if (criteria.maxPrice !== undefined)
+      query.andWhere('product.price <= :maxPrice', { maxPrice: criteria.maxPrice });
   }
 
   create(data: Partial<Product>) {
-    return this.repo.save(this.repo.create(data as any)) as unknown as Promise<Product>;
+    return this.repo.save(this.repo.create(data));
   }
 
   async update(id: number, data: Partial<Product>) {
-    await this.repo.update({ id }, data as any);
+    await this.repo.update({ id }, data);
     return this.findById(id);
   }
 
@@ -85,7 +99,10 @@ export class TypeOrmProductRepository implements ProductRepository {
   }
 
   findBasicInfoByIds(ids: number[]) {
-    return this.repo.find({ where: { id: In(ids) }, select: ['id', 'name', 'price', 'image', 'quantity'] });
+    return this.repo.find({
+      where: { id: In(ids) },
+      select: ['id', 'name', 'price', 'image', 'quantity'],
+    });
   }
 
   findAllBasicInfo() {

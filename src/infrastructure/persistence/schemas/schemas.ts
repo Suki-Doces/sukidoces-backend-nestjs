@@ -13,15 +13,20 @@ import {
   RefreshSession,
   User,
   Webhook,
-} from '../../../domain/entities';
-import { decimalTransformer } from '../decimal.transformer';
+} from '@domain/entities';
+import { decimalTransformer } from '@infrastructure/persistence';
 
 /*
  * The domain entities are plain classes. These schemas are the ONLY place that
  * knows how they map to the database; schema changes are applied through migrations.
  */
 
-const decimal = { type: 'decimal' as const, precision: 10, scale: 2, transformer: decimalTransformer };
+const decimal = {
+  type: 'decimal' as const,
+  precision: 10,
+  scale: 2,
+  transformer: decimalTransformer,
+};
 
 export const UserSchema = new EntitySchema<User>({
   name: 'User',
@@ -133,8 +138,18 @@ export const OrderSchema = new EntitySchema<Order>({
     { columns: ['userId', 'idempotencyKey'], unique: true },
   ],
   relations: {
-    user: { type: 'many-to-one', target: 'User', joinColumn: { name: 'id_usuario' }, inverseSide: 'orders' },
-    coupon: { type: 'many-to-one', target: 'Coupon', joinColumn: { name: 'id_cupom' }, nullable: true },
+    user: {
+      type: 'many-to-one',
+      target: 'User',
+      joinColumn: { name: 'id_usuario' },
+      inverseSide: 'orders',
+    },
+    coupon: {
+      type: 'many-to-one',
+      target: 'Coupon',
+      joinColumn: { name: 'id_cupom' },
+      nullable: true,
+    },
     items: { type: 'one-to-many', target: 'OrderItem', inverseSide: 'order' },
   },
 });
@@ -152,7 +167,12 @@ export const OrderItemSchema = new EntitySchema<OrderItem>({
   },
   indices: [{ columns: ['productId'] }],
   relations: {
-    order: { type: 'many-to-one', target: 'Order', joinColumn: { name: 'id_pedido' }, inverseSide: 'items' },
+    order: {
+      type: 'many-to-one',
+      target: 'Order',
+      joinColumn: { name: 'id_pedido' },
+      inverseSide: 'items',
+    },
     product: { type: 'many-to-one', target: 'Product', joinColumn: { name: 'id_produto' } },
   },
 });
@@ -191,8 +211,18 @@ export const NotificationSchema = new EntitySchema<Notification>({
   },
   indices: [{ columns: ['userId', 'isRead'] }, { columns: ['adminId', 'isRead'] }],
   relations: {
-    user: { type: 'many-to-one', target: 'User', joinColumn: { name: 'id_usuario' }, nullable: true },
-    admin: { type: 'many-to-one', target: 'Admin', joinColumn: { name: 'id_admin' }, nullable: true },
+    user: {
+      type: 'many-to-one',
+      target: 'User',
+      joinColumn: { name: 'id_usuario' },
+      nullable: true,
+    },
+    admin: {
+      type: 'many-to-one',
+      target: 'Admin',
+      joinColumn: { name: 'id_admin' },
+      nullable: true,
+    },
   },
 });
 
@@ -228,7 +258,12 @@ export const ContactMessageSchema = new EntitySchema<ContactMessage>({
   },
   indices: [{ columns: ['userId'] }],
   relations: {
-    user: { type: 'many-to-one', target: 'User', joinColumn: { name: 'id_usuario' }, nullable: true },
+    user: {
+      type: 'many-to-one',
+      target: 'User',
+      joinColumn: { name: 'id_usuario' },
+      nullable: true,
+    },
   },
 });
 

@@ -1,6 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { buildHealthReport, HealthReport, ProbeResult } from '../../../domain/health/health-report';
-import { HEALTH_PROBES, HealthProbe } from '../../ports';
+import { buildHealthReport, HealthReport, ProbeResult } from '@domain/health';
+import { HEALTH_PROBES, HealthProbe } from '@application/ports';
 
 @Injectable()
 export class CheckHealthUseCase {
@@ -16,7 +16,11 @@ export class CheckHealthUseCase {
         } catch (error) {
           return [
             probe.name,
-            { status: 'down', responseTimeMs: Date.now() - startedAt, details: { error: (error as Error).message } },
+            {
+              status: 'down',
+              responseTimeMs: Date.now() - startedAt,
+              details: { error: (error as Error).message },
+            },
           ];
         }
       }),

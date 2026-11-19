@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
-import { UserRepository } from '../../../domain/repositories';
-import { buildPagination, clampPagination, Pagination } from '../../common/pagination';
-import { InternalError } from '../../errors/application-errors';
+import { UserRepository } from '@domain/repositories';
+import { buildPagination, clampPagination, Pagination } from '@application/common';
+import { InternalError } from '@application/errors';
 
 export interface CustomerView {
   id: number;
@@ -48,7 +48,11 @@ export class ListCustomersUseCase {
       sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
       const newCustomersLast7Days = await this.users.countCustomers(sevenDaysAgo);
 
-      return { customers: views, pagination: buildPagination(total, page, limit), newCustomersLast7Days };
+      return {
+        customers: views,
+        pagination: buildPagination(total, page, limit),
+        newCustomersLast7Days,
+      };
     } catch {
       throw new InternalError('Error fetching customers');
     }

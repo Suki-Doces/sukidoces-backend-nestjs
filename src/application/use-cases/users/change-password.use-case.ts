@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
-import { UserRepository } from '../../../domain/repositories';
-import { BadRequestError, NotFoundError, UnauthorizedError } from '../../errors/application-errors';
-import { PasswordHasher } from '../../ports';
+import { UserRepository } from '@domain/repositories';
+import { BadRequestError, NotFoundError, UnauthorizedError } from '@application/errors';
+import { PasswordHasher } from '@application/ports';
 
 export interface ChangePasswordInput {
   userId: number;

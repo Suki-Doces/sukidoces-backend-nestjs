@@ -12,7 +12,12 @@ export interface ClampedPagination {
 }
 
 /** Normalizes raw page/limit values and caps the page size so clients cannot request a whole table. */
-export function clampPagination(rawPage: unknown, rawLimit: unknown, defaultLimit = 20, maxLimit = 100): ClampedPagination {
+export function clampPagination(
+  rawPage: unknown,
+  rawLimit: unknown,
+  defaultLimit = 20,
+  maxLimit = 100,
+): ClampedPagination {
   const page = Math.max(1, parseInt(String(rawPage), 10) || 1);
   const limit = Math.min(maxLimit, Math.max(1, parseInt(String(rawLimit), 10) || defaultLimit));
   return { page, limit, skip: (page - 1) * limit };

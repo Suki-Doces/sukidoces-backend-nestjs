@@ -1,7 +1,7 @@
 import { Expose, Transform } from 'class-transformer';
 import { IsEmail, IsOptional, IsString, MinLength } from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { Sanitize } from '../decorators/sanitize.decorator';
+import { Sanitize } from '@presentation/http/decorators';
 
 export class UpdateAdminSettingsDto {
   @ApiPropertyOptional({ name: 'nome' })

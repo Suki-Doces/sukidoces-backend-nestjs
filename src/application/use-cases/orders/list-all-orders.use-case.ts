@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { OrderRepository } from '../../../domain/repositories';
+import { OrderRepository } from '@domain/repositories';
 
 export interface AdminOrderView {
   id: number;

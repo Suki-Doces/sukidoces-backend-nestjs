@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { UnauthorizedError } from '../../errors/application-errors';
-import { RefreshTokenStore, TokenClaims, TokenService } from '../../ports';
+import { UnauthorizedError } from '@application/errors';
+import { RefreshTokenStore, TokenClaims, TokenService } from '@application/ports';
 
 @Injectable()
 export class LogoutUseCase {

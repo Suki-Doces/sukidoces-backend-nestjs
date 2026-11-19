@@ -1,25 +1,46 @@
 import {
-  Body, Controller, Delete, Get, Param, ParseIntPipe, Post, Put, Query, UploadedFile, UseGuards, UseInterceptors,
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  ParseIntPipe,
+  Post,
+  Put,
+  Query,
+  UploadedFile,
+  UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiTags } from '@nestjs/swagger';
-import { CreateProductUseCase } from '../../../application/use-cases/products/create-product.use-case';
-import { DeleteProductUseCase } from '../../../application/use-cases/products/delete-product.use-case';
-import { GetBestSellersUseCase } from '../../../application/use-cases/products/get-best-sellers.use-case';
-import { GetNewProductsUseCase } from '../../../application/use-cases/products/get-new-products.use-case';
-import { GetProductUseCase } from '../../../application/use-cases/products/get-product.use-case';
-import { ListProductCategoriesUseCase } from '../../../application/use-cases/products/list-product-categories.use-case';
-import { ListProductsUseCase } from '../../../application/use-cases/products/list-products.use-case';
-import { UpdateProductUseCase } from '../../../application/use-cases/products/update-product.use-case';
-import { CreateProductDto, UpdateProductDto } from '../dto/product.dto';
-import { AdminGuard } from '../guards/admin.guard';
-import { JwtAuthGuard } from '../guards/jwt-auth.guard';
-import { successResponse } from '../support/api-response';
-import { multerOptions } from '../support/multer.config';
-import { presentCategory, presentProduct } from '../support/presenters';
+import {
+  CreateProductUseCase,
+  DeleteProductUseCase,
+  GetBestSellersUseCase,
+  GetNewProductsUseCase,
+  GetProductUseCase,
+  ListProductCategoriesUseCase,
+  ListProductsUseCase,
+  UpdateProductUseCase,
+} from '@application/use-cases/products';
+
+import { CreateProductDto, UpdateProductDto } from '@presentation/http/dto';
+import { AdminGuard, JwtAuthGuard } from '@presentation/http/guards';
+
+import {
+  successResponse,
+  multerOptions,
+  presentCategory,
+  presentProduct,
+} from '@presentation/http/support';
 
 /** Query-string values of the public contract -> use case sort names. */
-const SORT_FILTERS: Record<string, string> = { novos: 'newest', 'menor-preco': 'lowest-price', 'maior-preco': 'highest-price' };
+const SORT_FILTERS: Record<string, string> = {
+  novos: 'newest',
+  'menor-preco': 'lowest-price',
+  'maior-preco': 'highest-price',
+};
 
 @ApiTags('products')
 @Controller('produtos')
@@ -37,18 +58,27 @@ export class ProductsController {
 
   @Get('categorias')
   async categories() {
-    return successResponse('Categories loaded successfully', (await this.listCategories.execute()).map(presentCategory));
+    return successResponse(
+      'Categories loaded successfully',
+      (await this.listCategories.execute()).map(presentCategory),
+    );
   }
 
   @Get('mais-vendidos')
   async bestSellers() {
     const { featured, products } = await this.getBestSellers.execute();
-    return successResponse(featured ? 'Featured products' : 'Best-selling products', products.map(presentProduct));
+    return successResponse(
+      featured ? 'Featured products' : 'Best-selling products',
+      products.map(presentProduct),
+    );
   }
 
   @Get('novos')
   async newProducts() {
-    return successResponse('Recent products', (await this.getNewProducts.execute()).map(presentProduct));
+    return successResponse(
+      'Recent products',
+      (await this.getNewProducts.execute()).map(presentProduct),
+    );
   }
 
   @Get()
@@ -65,7 +95,10 @@ export class ProductsController {
     });
 
     return pagination
-      ? successResponse('Product list loaded', { produtos: products.map(presentProduct), pagination })
+      ? successResponse('Product list loaded', {
+          produtos: products.map(presentProduct),
+          pagination,
+        })
       : successResponse('Products loaded successfully', products.map(presentProduct));
   }
 
@@ -85,9 +118,15 @@ export class ProductsController {
   @Put(':id')
   @UseGuards(JwtAuthGuard, AdminGuard)
   @UseInterceptors(FileInterceptor('imagem', multerOptions))
-  async update(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateProductDto, @UploadedFile() image?: Express.Multer.File) {
+  async update(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: UpdateProductDto,
+    @UploadedFile() image?: Express.Multer.File,
+  ) {
     const product = await this.updateProduct.execute({ id, ...dto, image: image?.buffer });
-    return successResponse('Product updated successfully', { produto: product ? presentProduct(product) : null });
+    return successResponse('Product updated successfully', {
+      produto: product ? presentProduct(product) : null,
+    });
   }
 
   @Delete(':id')

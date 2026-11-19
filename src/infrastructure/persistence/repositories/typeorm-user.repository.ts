@@ -1,8 +1,8 @@
-import { Repository } from 'typeorm';
-import { User } from '../../../domain/entities';
-import { UserRole } from '../../../domain/enums';
-import { CreateUserData, UserRepository } from '../../../domain/repositories';
-import { OrderSchema } from '../schemas/schemas';
+import { QueryDeepPartialEntity, Repository } from 'typeorm';
+import { User } from '@domain/entities';
+import { UserRole } from '@domain/enums';
+import { CreateUserData, UserRepository } from '@domain/repositories';
+import { OrderSchema } from '@infrastructure/persistence/schemas';
 
 export class TypeOrmUserRepository implements UserRepository {
   constructor(private readonly repo: Repository<User>) {}
@@ -28,7 +28,7 @@ export class TypeOrmUserRepository implements UserRepository {
   }
 
   async updateProfile(id: number, data: Partial<User>) {
-    await this.repo.update({ id }, data as any);
+    await this.repo.update({ id }, data as QueryDeepPartialEntity<User>);
     return this.findById(id);
   }
 
@@ -67,7 +67,9 @@ export class TypeOrmUserRepository implements UserRepository {
   }
 
   countCustomers(since?: Date) {
-    const query = this.repo.createQueryBuilder('user').where('user.role = :role', { role: UserRole.CUSTOMER });
+    const query = this.repo
+      .createQueryBuilder('user')
+      .where('user.role = :role', { role: UserRole.CUSTOMER });
     if (since) query.andWhere('user.createdAt >= :since', { since });
     return query.getCount();
   }

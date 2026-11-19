@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
-import { Category } from '../../../domain/entities';
-import { CategoryRepository } from '../../../domain/repositories';
-import { InternalError } from '../../errors/application-errors';
+import { Category } from '@domain/entities';
+import { CategoryRepository } from '@domain/repositories';
+import { InternalError } from '@application/errors';
 
 @Injectable()
 export class ListCategoriesUseCase {

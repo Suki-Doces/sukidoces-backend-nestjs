@@ -2,7 +2,7 @@ import { Controller, Get, Res } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { SkipThrottle } from '@nestjs/throttler';
 import { Response } from 'express';
-import { CheckHealthUseCase } from '../../../application/use-cases/health/check-health.use-case';
+import { CheckHealthUseCase } from '@application/use-cases/health';
 
 /**
  * Health endpoints for load balancers and orchestrators (served outside the

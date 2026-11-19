@@ -1,4 +1,4 @@
-import { Category } from '../entities';
+import { Category } from '@domain/entities';
 
 export abstract class CategoryRepository {
   abstract findAll(): Promise<Category[]>;

@@ -6,8 +6,8 @@ import {
   OrderPaidEvent,
   OrderStatusUpdatedEvent,
   UserRegisteredEvent,
-} from '../../domain/events/domain-events';
-import { WebhookDelivery } from '../../application/ports/webhook-client';
+} from '@domain/events';
+import { WebhookDelivery } from '@application/ports';
 
 /**
  * Third parties already consume this payload, so its field names are part of
@@ -26,7 +26,10 @@ function toEventPayload(event: DomainEvent): Record<string, unknown> {
     case DomainEventNames.USER_REGISTERED:
       return { nomeUsuario: (event as UserRegisteredEvent).userName };
     case DomainEventNames.ORDER_CREATED:
-      return { idPedido: (event as OrderCreatedEvent).orderId, valorTotal: (event as OrderCreatedEvent).totalAmount };
+      return {
+        idPedido: (event as OrderCreatedEvent).orderId,
+        valorTotal: (event as OrderCreatedEvent).totalAmount,
+      };
     case DomainEventNames.ORDER_PAID:
       return { idPedido: (event as OrderPaidEvent).orderId };
     case DomainEventNames.ORDER_STATUS_UPDATED:

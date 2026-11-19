@@ -6,11 +6,11 @@ import request from 'supertest';
 import { DataSource } from 'typeorm';
 import { AppModule } from '../src/app.module';
 import { applyCors, applyHttpConventions } from '../src/app.setup';
-import { HEALTH_PROBES, HealthProbe, ImageStorage, TokenService } from '../src/application/ports';
-import { CheckHealthUseCase } from '../src/application/use-cases/health/check-health.use-case';
-import { AdminSchema, NotificationSchema } from '../src/infrastructure/persistence/schemas/schemas';
-import { DatabaseModule } from '../src/infrastructure/persistence/database.module';
-import { HealthController } from '../src/presentation/http/controllers/health.controller';
+import { HEALTH_PROBES, HealthProbe, ImageStorage, TokenService } from '@application/ports';
+import { CheckHealthUseCase } from '@application/use-cases/health';
+import { AdminSchema, NotificationSchema } from '@infrastructure/persistence/schemas';
+import { DatabaseModule } from '@infrastructure/persistence';
+import { HealthController } from '@presentation/http/controllers';
 import { TestDatabaseModule } from './test-database.module';
 
 /*
@@ -45,7 +45,9 @@ describe('Suki Doces API (integration)', () => {
       const res = await request(server()).get('/health');
       expect(res.body.checks.database.status).toBe('up');
       expect(['up', 'down']).toContain(res.body.checks.memory.status);
-      const healthy = Object.values(res.body.checks).every((check: { status: string }) => check.status === 'up');
+      const healthy = Object.values(res.body.checks).every(
+        (check: { status: string }) => check.status === 'up',
+      );
       expect(res.status).toBe(healthy ? 200 : 503);
       expect(res.body.status).toBe(healthy ? 'ok' : 'error');
       expect(typeof res.body.uptimeSeconds).toBe('number');
@@ -55,7 +57,9 @@ describe('Suki Doces API (integration)', () => {
     it('GET /health/ready reflects probe status and /health/live answers 200 without the API prefix', async () => {
       const ready = await request(server()).get('/health/ready');
       expect(ready.body.checks.database.status).toBe('up');
-      const healthy = Object.values(ready.body.checks).every((check: { status: string }) => check.status === 'up');
+      const healthy = Object.values(ready.body.checks).every(
+        (check: { status: string }) => check.status === 'up',
+      );
       expect(ready.status).toBe(healthy ? 200 : 503);
       const live = await request(server()).get('/health/live');
       expect(live.status).toBe(200);
@@ -69,8 +73,13 @@ describe('Suki Doces API (integration)', () => {
     });
 
     it('generates the OpenAPI document with the public routes', () => {
-      const document = SwaggerModule.createDocument(app, new DocumentBuilder().setTitle('test').build());
-      expect(Object.keys(document.paths)).toEqual(expect.arrayContaining(['/suki-doces/usuario/registro', '/suki-doces/produtos', '/health']));
+      const document = SwaggerModule.createDocument(
+        app,
+        new DocumentBuilder().setTitle('test').build(),
+      );
+      expect(Object.keys(document.paths)).toEqual(
+        expect.arrayContaining(['/suki-doces/usuario/registro', '/suki-doces/produtos', '/health']),
+      );
       expect(document).toHaveProperty('components.schemas.RegisterDto.properties.nome');
       expect(document).toHaveProperty('components.schemas.RegisterDto.properties.senha');
       expect(document).not.toHaveProperty('components.schemas.RegisterDto.properties.name');
@@ -79,13 +88,20 @@ describe('Suki Doces API (integration)', () => {
       expect(document).toHaveProperty('components.schemas.UpdateAdminSettingsDto.properties.email');
       expect(document).toHaveProperty('components.schemas.UpdateAdminSettingsDto.properties.nome');
       expect(document).toHaveProperty('components.schemas.UpdateCustomerDto.properties.status');
-      expect(document).toHaveProperty('components.schemas.UpdateCustomerDto.properties.status.enum', ['ativo', 'inativo']);
+      expect(document).toHaveProperty(
+        'components.schemas.UpdateCustomerDto.properties.status.enum',
+        ['ativo', 'inativo'],
+      );
       expect(document).toHaveProperty(
         'components.schemas.CheckoutDto.required',
         expect.arrayContaining(['produtos', 'metodo_pagamento']),
       );
       const checkoutHeaders = document.paths['/suki-doces/pedidos'].post?.parameters ?? [];
-      expect(checkoutHeaders).toEqual(expect.arrayContaining([expect.objectContaining({ name: 'Idempotency-Key', in: 'header', required: true })]));
+      expect(checkoutHeaders).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ name: 'Idempotency-Key', in: 'header', required: true }),
+        ]),
+      );
     });
 
     it('allows the checkout idempotency header in browser preflight requests', async () => {
@@ -96,7 +112,9 @@ describe('Suki Doces API (integration)', () => {
         .set('Access-Control-Request-Headers', 'authorization,content-type,idempotency-key');
 
       expect(res.status).toBe(204);
-      expect(res.headers['access-control-allow-headers'].toLowerCase()).toContain('idempotency-key');
+      expect(res.headers['access-control-allow-headers'].toLowerCase()).toContain(
+        'idempotency-key',
+      );
     });
 
     it('GET / and GET /metrics are reachable outside the prefix', async () => {
@@ -124,7 +142,9 @@ describe('Suki Doces API (integration)', () => {
       expect(missing.status).toBe(401);
       expect(missing.body.message).toBe('Missing or invalid token');
 
-      const malformed = await request(server()).get('/suki-doces/usuario/perfil').set('Authorization', 'Bearer nope');
+      const malformed = await request(server())
+        .get('/suki-doces/usuario/perfil')
+        .set('Authorization', 'Bearer nope');
       expect(malformed.status).toBe(401);
       expect(malformed.body.message).toBe('Invalid token');
     });
@@ -137,7 +157,12 @@ describe('Suki Doces API (integration)', () => {
   });
 
   describe('registration -> login -> protected route -> refresh', () => {
-    const user = { nome: 'Maria Teste', email: 'maria.e2e@teste.com', senha: 'senha123', telefone: '11999999999' };
+    const user = {
+      nome: 'Maria Teste',
+      email: 'maria.e2e@teste.com',
+      senha: 'senha123',
+      telefone: '11999999999',
+    };
     let accessToken: string;
     let refreshToken: string;
     let userId: number;
@@ -147,7 +172,11 @@ describe('Suki Doces API (integration)', () => {
       expect(res.status).toBe(201);
       expect(res.body.data.token).toBeDefined();
       expect(res.body.data.refreshToken).toBeDefined();
-      expect(res.body.data.user).toMatchObject({ nome: 'Maria Teste', email: user.email, nivel: 'cliente' });
+      expect(res.body.data.user).toMatchObject({
+        nome: 'Maria Teste',
+        email: user.email,
+        nivel: 'cliente',
+      });
       accessToken = res.body.data.token;
       refreshToken = res.body.data.refreshToken;
       userId = res.body.data.user.id;
@@ -160,26 +189,38 @@ describe('Suki Doces API (integration)', () => {
     });
 
     it('returns the profile without ever exposing the password hash', async () => {
-      const pendingProfile = await request(server()).get('/suki-doces/usuario/perfil').set('Authorization', `Bearer ${accessToken}`);
+      const pendingProfile = await request(server())
+        .get('/suki-doces/usuario/perfil')
+        .set('Authorization', `Bearer ${accessToken}`);
       expect(pendingProfile.status).toBe(401);
 
-      const pendingLogin = await request(server()).post('/suki-doces/usuario/login').send({ email: user.email, senha: user.senha });
+      const pendingLogin = await request(server())
+        .post('/suki-doces/usuario/login')
+        .send({ email: user.email, senha: user.senha });
       expect(pendingLogin.status).toBe(401);
 
       const verificationToken = await app.get(TokenService).signEmailVerificationToken(userId);
-      const verified = await request(server()).get('/suki-doces/usuario/verificar-email').query({ token: verificationToken });
+      const verified = await request(server())
+        .get('/suki-doces/usuario/verificar-email')
+        .query({ token: verificationToken });
       expect(verified.status).toBe(200);
 
-      const res = await request(server()).get('/suki-doces/usuario/perfil').set('Authorization', `Bearer ${accessToken}`);
+      const res = await request(server())
+        .get('/suki-doces/usuario/perfil')
+        .set('Authorization', `Bearer ${accessToken}`);
       expect(res.status).toBe(200);
       expect(res.body.data.user.email).toBe(user.email);
       expect(JSON.stringify(res.body)).not.toMatch(/senha|password/i);
     });
 
     it('logs in with the right password and rejects the wrong one', async () => {
-      const ok = await request(server()).post('/suki-doces/usuario/login').send({ email: user.email, senha: user.senha });
+      const ok = await request(server())
+        .post('/suki-doces/usuario/login')
+        .send({ email: user.email, senha: user.senha });
       expect(ok.status).toBe(200);
-      const wrong = await request(server()).post('/suki-doces/usuario/login').send({ email: user.email, senha: 'wrong-password' });
+      const wrong = await request(server())
+        .post('/suki-doces/usuario/login')
+        .send({ email: user.email, senha: 'wrong-password' });
       expect(wrong.status).toBe(401);
     });
 
@@ -188,10 +229,14 @@ describe('Suki Doces API (integration)', () => {
       expect(ok.status).toBe(200);
       expect(ok.body.data.accessToken).toBeDefined();
 
-      const wrong = await request(server()).post('/suki-doces/usuario/refresh').send({ refreshToken: accessToken });
+      const wrong = await request(server())
+        .post('/suki-doces/usuario/refresh')
+        .send({ refreshToken: accessToken });
       expect(wrong.status).toBe(401);
 
-      const replay = await request(server()).post('/suki-doces/usuario/refresh').send({ refreshToken });
+      const replay = await request(server())
+        .post('/suki-doces/usuario/refresh')
+        .send({ refreshToken });
       expect(replay.status).toBe(401);
       refreshToken = ok.body.data.refreshToken;
     });
@@ -202,11 +247,15 @@ describe('Suki Doces API (integration)', () => {
         .set('Authorization', `Bearer ${accessToken}`)
         .send({ refreshToken });
       expect(logout.status).toBe(201);
-      expect((await request(server()).post('/suki-doces/usuario/refresh').send({ refreshToken })).status).toBe(401);
+      expect(
+        (await request(server()).post('/suki-doces/usuario/refresh').send({ refreshToken })).status,
+      ).toBe(401);
     });
 
     it('refuses a refresh token used as an access token', async () => {
-      const res = await request(server()).get('/suki-doces/usuario/perfil').set('Authorization', `Bearer ${refreshToken}`);
+      const res = await request(server())
+        .get('/suki-doces/usuario/perfil')
+        .set('Authorization', `Bearer ${refreshToken}`);
       expect(res.status).toBe(401);
     });
   });
@@ -217,25 +266,44 @@ describe('Suki Doces API (integration)', () => {
     let productId: number;
     let orderId: number;
 
-    const stock = async () => (await request(server()).get(`/suki-doces/produtos/${productId}`)).body.data.quantidade;
+    const stock = async () =>
+      (await request(server()).get(`/suki-doces/produtos/${productId}`)).body.data.quantidade;
 
     beforeAll(async () => {
       const admins = app.get(DataSource).getRepository(AdminSchema);
-      await admins.save(admins.create({ name: 'Admin E2E', email: 'admin.e2e@teste.com', password: await bcrypt.hash('admin123', 4) }));
+      await admins.save(
+        admins.create({
+          name: 'Admin E2E',
+          email: 'admin.e2e@teste.com',
+          password: await bcrypt.hash('admin123', 4),
+        }),
+      );
 
-      const login = await request(server()).post('/suki-doces/admin/login').send({ email: 'admin.e2e@teste.com', senha: 'admin123' });
+      const login = await request(server())
+        .post('/suki-doces/admin/login')
+        .send({ email: 'admin.e2e@teste.com', senha: 'admin123' });
       adminToken = login.body.data.token;
 
-      const registration = await request(server())
-        .post('/suki-doces/usuario/registro')
-        .send({ nome: 'Joao Loja', email: 'joao.loja@teste.com', senha: 'senha123', telefone: '11988887777' });
+      const registration = await request(server()).post('/suki-doces/usuario/registro').send({
+        nome: 'Joao Loja',
+        email: 'joao.loja@teste.com',
+        senha: 'senha123',
+        telefone: '11988887777',
+      });
       customerToken = registration.body.data.token;
-      const verificationToken = await app.get(TokenService).signEmailVerificationToken(registration.body.data.user.id);
-      await request(server()).get('/suki-doces/usuario/verificar-email').query({ token: verificationToken }).expect(200);
+      const verificationToken = await app
+        .get(TokenService)
+        .signEmailVerificationToken(registration.body.data.user.id);
+      await request(server())
+        .get('/suki-doces/usuario/verificar-email')
+        .query({ token: verificationToken })
+        .expect(200);
     });
 
     it('admin login reports the admin role', async () => {
-      const res = await request(server()).post('/suki-doces/admin/login').send({ email: 'admin.e2e@teste.com', senha: 'admin123' });
+      const res = await request(server())
+        .post('/suki-doces/admin/login')
+        .send({ email: 'admin.e2e@teste.com', senha: 'admin123' });
       expect(res.body.data.user.nivel).toBe('admin');
       expect(res.body.message).toBe('Admin login successful');
     });
@@ -265,10 +333,18 @@ describe('Suki Doces API (integration)', () => {
         .field('nome', 'Chocolate Cake')
         .field('preco', '45.90')
         .field('quantidade', '10')
-        .attach('imagem', Buffer.from('fake-image'), { filename: 'cake.png', contentType: 'image/png' });
+        .attach('imagem', Buffer.from('fake-image'), {
+          filename: 'cake.png',
+          contentType: 'image/png',
+        });
 
       expect(res.status).toBe(201);
-      expect(res.body.data.produto).toMatchObject({ nome: 'Chocolate Cake', preco: 45.9, quantidade: 10, imagem: 'https://img.example/photo.png' });
+      expect(res.body.data.produto).toMatchObject({
+        nome: 'Chocolate Cake',
+        preco: 45.9,
+        quantidade: 10,
+        imagem: 'https://img.example/photo.png',
+      });
       productId = res.body.data.produto.id_produto;
     });
 
@@ -299,8 +375,14 @@ describe('Suki Doces API (integration)', () => {
         .send({ produto_id: productId, quantidade: 1 });
       expect(add.status).toBe(201);
 
-      const cart = await request(server()).get('/suki-doces/carrinho').set('Authorization', `Bearer ${customerToken}`);
-      expect(cart.body.data.cartItems[0]).toMatchObject({ id_produto: productId, quantidade: 1, total: 45.9 });
+      const cart = await request(server())
+        .get('/suki-doces/carrinho')
+        .set('Authorization', `Bearer ${customerToken}`);
+      expect(cart.body.data.cartItems[0]).toMatchObject({
+        id_produto: productId,
+        quantidade: 1,
+        total: 45.9,
+      });
       expect(cart.body.data.frete).toBe(8.9);
       expect(cart.body.data.freteGratis).toBe(false);
 
@@ -311,7 +393,9 @@ describe('Suki Doces API (integration)', () => {
         .send({ quantidade: 999 });
       expect(tooMany.status).toBe(400);
 
-      const clear = await request(server()).delete('/suki-doces/carrinho').set('Authorization', `Bearer ${customerToken}`);
+      const clear = await request(server())
+        .delete('/suki-doces/carrinho')
+        .set('Authorization', `Bearer ${customerToken}`);
       expect(clear.status).toBe(200);
     });
 
@@ -361,12 +445,16 @@ describe('Suki Doces API (integration)', () => {
         .get('/suki-doces/admin/clientes')
         .set('Authorization', `Bearer ${adminToken}`);
       expect(response.status).toBe(200);
-      const customer = response.body.data.clientes.find((item: { email: string }) => item.email === 'joao.loja@teste.com');
+      const customer = response.body.data.clientes.find(
+        (item: { email: string }) => item.email === 'joao.loja@teste.com',
+      );
       expect(customer).toMatchObject({ valor_total: 91.8, total_pedidos: 1 });
     });
 
     it("another user cannot cancel someone else's order (403)", async () => {
-      const maria = await request(server()).post('/suki-doces/usuario/login').send({ email: 'maria.e2e@teste.com', senha: 'senha123' });
+      const maria = await request(server())
+        .post('/suki-doces/usuario/login')
+        .send({ email: 'maria.e2e@teste.com', senha: 'senha123' });
       const res = await request(server())
         .patch(`/suki-doces/usuario/pedidos/${orderId}/cancelar`)
         .set('Authorization', `Bearer ${maria.body.data.token}`);
@@ -401,11 +489,15 @@ describe('Suki Doces API (integration)', () => {
       expect(created.body.data.pedido.status).toBe('pendente');
       const id = created.body.data.pedido.id_pedido;
 
-      const paid = await request(server()).post(`/suki-doces/pedidos/${id}/pagar`).set('Authorization', `Bearer ${customerToken}`);
+      const paid = await request(server())
+        .post(`/suki-doces/pedidos/${id}/pagar`)
+        .set('Authorization', `Bearer ${customerToken}`);
       expect(paid.status).toBe(201);
       expect(paid.body.data.pedido.status).toBe('pago');
 
-      const again = await request(server()).post(`/suki-doces/pedidos/${id}/pagar`).set('Authorization', `Bearer ${customerToken}`);
+      const again = await request(server())
+        .post(`/suki-doces/pedidos/${id}/pagar`)
+        .set('Authorization', `Bearer ${customerToken}`);
       expect(again.status).toBe(400);
       expect(again.body.message).toBe('Order already processed');
     });
@@ -420,45 +512,74 @@ describe('Suki Doces API (integration)', () => {
     });
 
     it('saves admin notifications under the admin foreign key', async () => {
-      const notifications = await request(server()).get('/suki-doces/admin/notificacoes').set('Authorization', `Bearer ${adminToken}`);
+      const notifications = await request(server())
+        .get('/suki-doces/admin/notificacoes')
+        .set('Authorization', `Bearer ${adminToken}`);
       expect(notifications.status).toBe(200);
       expect(notifications.body.data.notifications.length).toBeGreaterThan(0);
 
-      const stored = await app.get(DataSource).getRepository(NotificationSchema).findOne({ where: { adminId: 1 } });
+      const stored = await app
+        .get(DataSource)
+        .getRepository(NotificationSchema)
+        .findOne({ where: { adminId: 1 } });
       expect(stored).not.toBeNull();
       expect(stored?.userId).toBeNull();
     });
 
     it('admin panel: dashboard, orders and customers use the public contract shape', async () => {
-      const dashboard = await request(server()).get('/suki-doces/admin/dashboard').set('Authorization', `Bearer ${adminToken}`);
+      const dashboard = await request(server())
+        .get('/suki-doces/admin/dashboard')
+        .set('Authorization', `Bearer ${adminToken}`);
       expect(dashboard.status).toBe(200);
       expect(dashboard.body.data.resumo.totalPedidos).toBeGreaterThanOrEqual(2);
       expect(Array.isArray(dashboard.body.data.produtosDestaque)).toBe(true);
       expect(Array.isArray(dashboard.body.data.transacoes)).toBe(true);
 
-      const orders = await request(server()).get('/suki-doces/admin/pedidos').set('Authorization', `Bearer ${adminToken}`);
+      const orders = await request(server())
+        .get('/suki-doces/admin/pedidos')
+        .set('Authorization', `Bearer ${adminToken}`);
       expect(orders.status).toBe(200);
-      expect(orders.body.data[0]).toMatchObject({ cliente_nome: 'Joao Loja', itens: expect.any(Array) });
+      expect(orders.body.data[0]).toMatchObject({
+        cliente_nome: 'Joao Loja',
+        itens: expect.any(Array),
+      });
 
-      const customers = await request(server()).get('/suki-doces/admin/clientes').set('Authorization', `Bearer ${adminToken}`);
+      const customers = await request(server())
+        .get('/suki-doces/admin/clientes')
+        .set('Authorization', `Bearer ${adminToken}`);
       expect(customers.status).toBe(200);
-      const joao = customers.body.data.clientes.find((c: any) => c.email === 'joao.loja@teste.com');
+      const customerData = customers.body.data as {
+        clientes: Array<{ email: string; status: string; total_pedidos: number }>;
+      };
+      const joao = customerData.clientes.find(
+        (customer) => customer.email === 'joao.loja@teste.com',
+      );
       expect(joao).toMatchObject({ status: 'ativo', total_pedidos: 2 });
       expect(JSON.stringify(customers.body)).not.toMatch(/senha|password/i);
 
-      const customerOnly = await request(server()).get('/suki-doces/admin/clientes').set('Authorization', `Bearer ${customerToken}`);
+      const customerOnly = await request(server())
+        .get('/suki-doces/admin/clientes')
+        .set('Authorization', `Bearer ${customerToken}`);
       expect(customerOnly.status).toBe(403);
     });
 
     it('contact messages: anonymous create, history requires login, admin can answer', async () => {
-      const message = { nome: 'Visitor', email: 'visitor@teste.com', telefone: '11977776666', assunto: 'Question', mensagem: 'Do you deliver on Sundays?' };
+      const message = {
+        nome: 'Visitor',
+        email: 'visitor@teste.com',
+        telefone: '11977776666',
+        assunto: 'Question',
+        mensagem: 'Do you deliver on Sundays?',
+      };
 
       const created = await request(server()).post('/suki-doces/contatos').send(message);
       expect(created.status).toBe(201);
 
       expect((await request(server()).get('/suki-doces/contatos/me')).status).toBe(401);
 
-      const mine = await request(server()).get('/suki-doces/contatos/me').set('Authorization', `Bearer ${customerToken}`);
+      const mine = await request(server())
+        .get('/suki-doces/contatos/me')
+        .set('Authorization', `Bearer ${customerToken}`);
       expect(mine.body.data.messages).toEqual([]);
 
       const answered = await request(server())
@@ -466,11 +587,16 @@ describe('Suki Doces API (integration)', () => {
         .set('Authorization', `Bearer ${adminToken}`)
         .send({ resposta: 'Yes, we deliver every day.' });
       expect(answered.status).toBe(200);
-      expect(answered.body.data.contato).toMatchObject({ respondido: true, resposta: 'Yes, we deliver every day.' });
+      expect(answered.body.data.contato).toMatchObject({
+        respondido: true,
+        resposta: 'Yes, we deliver every day.',
+      });
     });
 
     it('webhooks stay locked behind their feature flag until an admin enables it', async () => {
-      const locked = await request(server()).get('/suki-doces/admin/webhooks').set('Authorization', `Bearer ${adminToken}`);
+      const locked = await request(server())
+        .get('/suki-doces/admin/webhooks')
+        .set('Authorization', `Bearer ${adminToken}`);
       expect(locked.status).toBe(403);
 
       const enable = await request(server())
@@ -491,12 +617,16 @@ describe('Suki Doces API (integration)', () => {
         .send({ url: 'http://localhost:9999/hook', eventos: ['nope'] });
       expect(invalid.status).toBe(400);
 
-      const list = await request(server()).get('/suki-doces/admin/webhooks').set('Authorization', `Bearer ${adminToken}`);
+      const list = await request(server())
+        .get('/suki-doces/admin/webhooks')
+        .set('Authorization', `Bearer ${adminToken}`);
       expect(list.body.data).toHaveLength(1);
     });
 
     it('admin notifications endpoint answers with the pagination contract', async () => {
-      const res = await request(server()).get('/suki-doces/admin/notificacoes?limit=99999').set('Authorization', `Bearer ${adminToken}`);
+      const res = await request(server())
+        .get('/suki-doces/admin/notificacoes?limit=99999')
+        .set('Authorization', `Bearer ${adminToken}`);
       expect(res.status).toBe(200);
       expect(res.body.data.pagination.limit).toBe(100); // page size is capped
     });
@@ -506,7 +636,14 @@ describe('Suki Doces API (integration)', () => {
 describe('health check when a dependency is down', () => {
   it('answers 503 with status "error" and keeps reporting the other probes', async () => {
     const probes: HealthProbe[] = [
-      { name: 'database', check: async () => ({ status: 'down', responseTimeMs: 3, details: { error: 'connection refused' } }) },
+      {
+        name: 'database',
+        check: async () => ({
+          status: 'down',
+          responseTimeMs: 3,
+          details: { error: 'connection refused' },
+        }),
+      },
       { name: 'memory', check: async () => ({ status: 'up', responseTimeMs: 0 }) },
     ];
 
@@ -520,7 +657,10 @@ describe('health check when a dependency is down', () => {
     const res = await request(app.getHttpServer()).get('/health');
     expect(res.status).toBe(503);
     expect(res.body.status).toBe('error');
-    expect(res.body.checks.database).toMatchObject({ status: 'down', details: { error: 'connection refused' } });
+    expect(res.body.checks.database).toMatchObject({
+      status: 'down',
+      details: { error: 'connection refused' },
+    });
     expect(res.body.checks.memory.status).toBe('up');
 
     // liveness must not depend on the broken dependency

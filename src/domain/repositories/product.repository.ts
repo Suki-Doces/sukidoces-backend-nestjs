@@ -1,4 +1,4 @@
-import { Product } from '../entities';
+import { Product } from '@domain/entities';
 
 export interface ProductSearchCriteria {
   categoryId?: number;
@@ -16,7 +16,10 @@ export abstract class ProductRepository {
   abstract findActiveFeatured(take: number): Promise<Product[]>;
   abstract findActiveByIds(ids: number[]): Promise<Product[]>;
   abstract findNewSince(since: Date, take: number): Promise<Product[]>;
-  abstract search(criteria: ProductSearchCriteria, options: { sort?: ProductSort; take?: number; skip?: number }): Promise<Product[]>;
+  abstract search(
+    criteria: ProductSearchCriteria,
+    options: { sort?: ProductSort; take?: number; skip?: number },
+  ): Promise<Product[]>;
   abstract count(criteria: ProductSearchCriteria): Promise<number>;
   abstract create(data: Partial<Product>): Promise<Product>;
   abstract update(id: number, data: Partial<Product>): Promise<Product | null>;

@@ -3,13 +3,28 @@ export interface MappedError {
   message: string;
 }
 
+interface DatabaseError {
+  code: string;
+  sqlMessage?: string;
+}
+
+function isDatabaseError(error: unknown): error is DatabaseError {
+  return (
+    typeof error === 'object' &&
+    error !== null &&
+    'code' in error &&
+    typeof error.code === 'string' &&
+    (!('sqlMessage' in error) || typeof error.sqlMessage === 'string')
+  );
+}
+
 /**
  * Translates MySQL driver error codes into HTTP errors. It only inspects the
  * `code` property, so it works for TypeORM's QueryFailedError and raw mysql2
  * errors alike, without importing either.
  */
-export function mapDatabaseError(error: any): MappedError | null {
-  if (!error?.code || typeof error.code !== 'string') return null;
+export function mapDatabaseError(error: unknown): MappedError | null {
+  if (!isDatabaseError(error)) return null;
 
   switch (error.code) {
     case 'ER_DUP_ENTRY': {

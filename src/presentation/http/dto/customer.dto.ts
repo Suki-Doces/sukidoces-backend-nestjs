@@ -1,7 +1,7 @@
 import { Expose, Transform } from 'class-transformer';
 import { IsEmail, IsIn, IsOptional, IsString, MinLength } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Sanitize } from '../decorators/sanitize.decorator';
+import { Sanitize } from '@presentation/http/decorators';
 
 /** Wire values for the customer status ("active" / "inactive"). */
 export const CUSTOMER_STATUS = { ACTIVE: 'ativo', INACTIVE: 'inativo' } as const;

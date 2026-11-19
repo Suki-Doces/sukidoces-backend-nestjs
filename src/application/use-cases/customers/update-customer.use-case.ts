@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
-import { User, UserProfile } from '../../../domain/entities';
-import { UserRepository } from '../../../domain/repositories';
-import { InternalError } from '../../errors/application-errors';
-import { PasswordHasher } from '../../ports';
+import { User, UserProfile } from '@domain/entities';
+import { UserRepository } from '@domain/repositories';
+import { InternalError } from '@application/errors';
+import { PasswordHasher } from '@application/ports';
 
 @Injectable()
 export class UpdateCustomerUseCase {
@@ -11,7 +11,10 @@ export class UpdateCustomerUseCase {
     private readonly hasher: PasswordHasher,
   ) {}
 
-  async execute(id: number, input: { name?: string; active?: boolean; password?: string }): Promise<UserProfile | null> {
+  async execute(
+    id: number,
+    input: { name?: string; active?: boolean; password?: string },
+  ): Promise<UserProfile | null> {
     try {
       const changes: Partial<User> = {
         ...(input.name !== undefined && { name: input.name }),

@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
-import { Product } from '../../../domain/entities';
-import { ProductRepository } from '../../../domain/repositories';
-import { ImageStorage } from '../../ports';
+import { Product } from '@domain/entities';
+import { ProductRepository } from '@domain/repositories';
+import { ImageStorage } from '@application/ports';
 
 export interface CreateProductInput {
   name: string;

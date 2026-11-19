@@ -1,15 +1,28 @@
-import { Body, Controller, Delete, Get, Param, ParseIntPipe, Post, Put, Query, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  ParseIntPipe,
+  Post,
+  Put,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
-import { CreateCustomerUseCase } from '../../../application/use-cases/customers/create-customer.use-case';
-import { DeleteCustomerUseCase } from '../../../application/use-cases/customers/delete-customer.use-case';
-import { GetNewCustomersStatsUseCase } from '../../../application/use-cases/customers/get-new-customers-stats.use-case';
-import { ListCustomersUseCase } from '../../../application/use-cases/customers/list-customers.use-case';
-import { UpdateCustomerUseCase } from '../../../application/use-cases/customers/update-customer.use-case';
-import { CreateCustomerDto, CUSTOMER_STATUS, UpdateCustomerDto } from '../dto/customer.dto';
-import { AdminGuard } from '../guards/admin.guard';
-import { JwtAuthGuard } from '../guards/jwt-auth.guard';
-import { successResponse } from '../support/api-response';
-import { presentCustomers, presentUserProfile } from '../support/presenters';
+import {
+  CreateCustomerUseCase,
+  DeleteCustomerUseCase,
+  GetNewCustomersStatsUseCase,
+  ListCustomersUseCase,
+  UpdateCustomerUseCase,
+} from '@application/use-cases/customers';
+
+import { CreateCustomerDto, CUSTOMER_STATUS, UpdateCustomerDto } from '@presentation/http/dto';
+import { AdminGuard, JwtAuthGuard } from '@presentation/http/guards';
+
+import { successResponse, presentCustomers, presentUserProfile } from '@presentation/http/support';
 
 @ApiTags('customers')
 @Controller('admin/clientes')
@@ -43,7 +56,9 @@ export class CustomersController {
       password: dto.password,
       active: dto.status === CUSTOMER_STATUS.ACTIVE,
     });
-    return successResponse('Customer created successfully', { cliente: presentUserProfile(customer) });
+    return successResponse('Customer created successfully', {
+      cliente: presentUserProfile(customer),
+    });
   }
 
   @Put(':id')
@@ -53,7 +68,9 @@ export class CustomersController {
       password: dto.password,
       ...(dto.status !== undefined && { active: dto.status === CUSTOMER_STATUS.ACTIVE }),
     });
-    return successResponse('Customer updated successfully', { cliente: customer ? presentUserProfile(customer) : null });
+    return successResponse('Customer updated successfully', {
+      cliente: customer ? presentUserProfile(customer) : null,
+    });
   }
 
   @Delete(':id')

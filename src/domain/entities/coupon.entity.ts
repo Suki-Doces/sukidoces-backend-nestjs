@@ -1,4 +1,4 @@
-import { CouponType } from '../enums';
+import { CouponType } from '@domain/enums';
 
 export class Coupon {
   id: number;

@@ -7,7 +7,7 @@ See [`ARCHITECTURE.md`](./ARCHITECTURE.md) for the design and [`REFACTORING_NOTE
 
 ## Getting started
 
-Use Node.js 20 (the version used by Docker and integration tests):
+Use Node.js 20.19 or newer within the 20.x release line (the version used by Docker and integration tests):
 
 ```bash
 npm install
@@ -33,8 +33,11 @@ With Docker: `docker compose up --build` (the API container applies migrations b
 |---|---|
 | `npm run start:dev` | Runs the API in watch mode |
 | `npm run build` | Compiles to `dist/` |
-| `npm run lint` | Type-checks the whole project (`tsc --noEmit`) |
-| `npm test` | Domain/use-case tests and integration tests (SQLite locally; MySQL in CI) |
+| `npm run lint` | Lints source and tests with ESLint |
+| `npm run typecheck` | Type-checks the whole project (`tsc --noEmit`) |
+| `npm run format` / `npm run format:check` | Formats source and checks formatting |
+| `npm test` | Runs tests with coverage thresholds for core domain entities |
+| `npm run test:e2e` | Runs the integration and unit test suites |
 | `npm run check:architecture` | Fails if any layer imports something it must not (dependency rule) |
 | `npm run migration:generate -- src/infrastructure/persistence/migrations/Name` | Generates a migration against `DATABASE_URL` |
 | `npm run migration:run` | Applies pending TypeORM migrations (`synchronize` is always off) |

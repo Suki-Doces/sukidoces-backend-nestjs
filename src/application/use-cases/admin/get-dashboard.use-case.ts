@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { OrderStatus, SALE_STATUSES } from '../../../domain/enums';
-import { OrderRepository, ProductRepository } from '../../../domain/repositories';
+import { OrderStatus, SALE_STATUSES } from '@domain/enums';
+import { OrderRepository, ProductRepository } from '@domain/repositories';
 
 export interface DashboardView {
   summary: {
@@ -15,8 +15,21 @@ export interface DashboardView {
     totalSales: number;
     totalOrders: number;
   };
-  topProducts: { productId: number; name: string; sales: number; price: number; image: string | null; inStock: boolean }[];
-  transactions: { orderId: number; customerName: string; createdAt: Date; status: string; totalAmount: number }[];
+  topProducts: {
+    productId: number;
+    name: string;
+    sales: number;
+    price: number;
+    image: string | null;
+    inStock: boolean;
+  }[];
+  transactions: {
+    orderId: number;
+    customerName: string;
+    createdAt: Date;
+    status: string;
+    totalAmount: number;
+  }[];
 }
 
 const growth = (current: number, previous: number): number =>
@@ -43,7 +56,11 @@ export class GetDashboardUseCase {
     previousWeekStart.setDate(now.getDate() - 14);
 
     const week = await this.orders.aggregate({ statuses: SALE_STATUSES, from: weekStart });
-    const previousWeek = await this.orders.aggregate({ statuses: SALE_STATUSES, from: previousWeekStart, to: weekStart });
+    const previousWeek = await this.orders.aggregate({
+      statuses: SALE_STATUSES,
+      from: previousWeekStart,
+      to: weekStart,
+    });
 
     const best = await this.orders.bestSellingProducts(5);
     const details = await this.products.findBasicInfoByIds(best.map((item) => item.productId));

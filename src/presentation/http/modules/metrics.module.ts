@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { MetricsController } from '../controllers/metrics.controller';
+import { MetricsController } from '@presentation/http/controllers';
 
 @Module({ controllers: [MetricsController] })
 export class MetricsModule {}

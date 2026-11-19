@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { NotificationOwner, NotificationRepository } from '../../../domain/repositories';
-import { ForbiddenError, InternalError } from '../../errors/application-errors';
+import { NotificationOwner, NotificationRepository } from '@domain/repositories';
+import { ForbiddenError, InternalError } from '@application/errors';
 
 @Injectable()
 export class DeleteNotificationUseCase {

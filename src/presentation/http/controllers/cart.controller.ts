@@ -1,15 +1,27 @@
-import { Body, Controller, Delete, Get, Param, ParseIntPipe, Post, Put, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  ParseIntPipe,
+  Post,
+  Put,
+  UseGuards,
+} from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
-import { AddToCartUseCase } from '../../../application/use-cases/cart/add-to-cart.use-case';
-import { ClearCartUseCase } from '../../../application/use-cases/cart/clear-cart.use-case';
-import { ListCartUseCase } from '../../../application/use-cases/cart/list-cart.use-case';
-import { RemoveCartItemUseCase } from '../../../application/use-cases/cart/remove-cart-item.use-case';
-import { UpdateCartItemQuantityUseCase } from '../../../application/use-cases/cart/update-cart-item-quantity.use-case';
-import { CurrentUser } from '../decorators/current-user.decorator';
-import { AddCartItemDto, UpdateCartItemDto } from '../dto/cart.dto';
-import { JwtAuthGuard } from '../guards/jwt-auth.guard';
-import { successResponse } from '../support/api-response';
-import { presentCart } from '../support/presenters';
+import {
+  AddToCartUseCase,
+  ClearCartUseCase,
+  ListCartUseCase,
+  RemoveCartItemUseCase,
+  UpdateCartItemQuantityUseCase,
+} from '@application/use-cases/cart';
+
+import { CurrentUser } from '@presentation/http/decorators';
+import { AddCartItemDto, UpdateCartItemDto } from '@presentation/http/dto';
+import { JwtAuthGuard } from '@presentation/http/guards';
+import { successResponse, presentCart } from '@presentation/http/support';
 
 @ApiTags('cart')
 @Controller('carrinho')
@@ -25,17 +37,28 @@ export class CartController {
 
   @Get()
   async list(@CurrentUser('id') userId: number) {
-    return successResponse('Cart loaded successfully', presentCart(await this.listCart.execute(userId)));
+    return successResponse(
+      'Cart loaded successfully',
+      presentCart(await this.listCart.execute(userId)),
+    );
   }
 
   @Post('add')
   async add(@CurrentUser('id') userId: number, @Body() dto: AddCartItemDto) {
-    await this.addToCart.execute({ userId, productId: dto.productId || dto.legacyProductId, quantity: dto.quantity });
+    await this.addToCart.execute({
+      userId,
+      productId: dto.productId || dto.legacyProductId,
+      quantity: dto.quantity,
+    });
     return successResponse('Product added to the cart');
   }
 
   @Put(':itemId')
-  async update(@CurrentUser('id') userId: number, @Param('itemId', ParseIntPipe) itemId: number, @Body() dto: UpdateCartItemDto) {
+  async update(
+    @CurrentUser('id') userId: number,
+    @Param('itemId', ParseIntPipe) itemId: number,
+    @Body() dto: UpdateCartItemDto,
+  ) {
     await this.updateQuantity.execute({ userId, itemId, quantity: dto.quantity });
     return successResponse('Quantity updated');
   }

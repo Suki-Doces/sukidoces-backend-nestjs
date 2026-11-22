@@ -21,7 +21,10 @@ export class AdminController {
   @HttpCode(200)
   @ApiOperation({ summary: 'Admin login (same unified logic as user login)' })
   async signIn(@Body() dto: LoginDto) {
-    return successResponse('Admin login successful', presentSession(await this.login.execute(dto)));
+    return {
+      message: 'Admin login successful',
+      ...presentSession(await this.login.execute(dto)),
+    };
   }
 
   @Get('dashboard')

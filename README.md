@@ -18,7 +18,7 @@ npm run seed                # optional: sample admin, categories and products
 npm run start:dev
 ```
 
-The initial migration creates the schema on an empty MySQL database. For an existing database created outside TypeORM migrations, verify its schema and baseline its migration history before running this initial migration; do not run it against populated tables.
+The initial migration creates the schema on an empty MySQL database. For the existing Express/Prisma database, first make a verified backup, then run `npm run migration:adopt:legacy` followed by `npm run migration:run`. The adoption command only records the existing initial schema after checking its core tables; the following additive migration adds NestJS fields, marks existing accounts as verified (the Express version had no email-verification flow), copies existing address rows into the profile JSON field, and creates missing NestJS support tables. Do not run `migration:run` against a populated Express database before adopting it.
 
 - API: `http://localhost:3000/suki-doces/...`
 - Swagger UI: `http://localhost:3000/docs`
@@ -42,6 +42,7 @@ With Docker: `docker compose up --build` (the API container applies migrations b
 | `npm run migration:generate -- src/infrastructure/persistence/migrations/Name` | Generates a migration against `DATABASE_URL` |
 | `npm run migration:run` | Applies pending TypeORM migrations (`synchronize` is always off) |
 | `npm run migration:revert` | Reverts the last applied migration |
+| `npm run migration:adopt:legacy` | Baselines the existing Express/Prisma schema so only additive migrations are applied |
 | `npm run seed` | Inserts sample data |
 
 ## Health check

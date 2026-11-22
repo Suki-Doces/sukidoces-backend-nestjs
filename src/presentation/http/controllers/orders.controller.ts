@@ -23,7 +23,7 @@ import { CurrentUser } from '@presentation/http/decorators';
 import { CheckoutDto } from '@presentation/http/dto';
 import { AdminGuard, JwtAuthGuard } from '@presentation/http/guards';
 
-import { successResponse, presentAdminOrder, presentOrder } from '@presentation/http/support';
+import { presentAdminOrder, presentOrder } from '@presentation/http/support';
 
 @ApiTags('orders')
 @Controller(['pedidos', 'admin/pedidos'])
@@ -39,10 +39,7 @@ export class OrdersController {
   @Get()
   @UseGuards(AdminGuard)
   async list() {
-    return successResponse(
-      'Orders loaded successfully',
-      (await this.listAllOrders.execute()).map(presentAdminOrder),
-    );
+    return (await this.listAllOrders.execute()).map(presentAdminOrder);
   }
 
   @Post()
@@ -68,24 +65,24 @@ export class OrdersController {
       paymentMethod: dto.paymentMethod,
       couponCode: dto.couponCode,
     });
-    return successResponse('Order placed successfully', { pedido: presentOrder(order) });
+    return { mensagem: 'Pedido realizado com sucesso!', pedido: presentOrder(order) };
   }
 
   @Throttle({ default: { limit: 10, ttl: 60_000 } })
   @Post(':id/pagar')
+  @HttpCode(200)
   async pay(@CurrentUser('id') userId: number, @Param('id', ParseIntPipe) id: number) {
     const order = await this.payOrder.execute(userId, id);
-    return successResponse('Order paid successfully', {
-      pedido: order ? presentOrder(order) : null,
-    });
+    return { sucesso: true, pedido: order ? presentOrder(order) : null };
   }
 
   @Patch(':id/status')
   @UseGuards(AdminGuard)
   async updateStatus(@Param('id', ParseIntPipe) id: number, @Body('status') status: string) {
     const order = await this.updateOrderStatus.execute(id, status);
-    return successResponse(`Status updated to ${status}`, {
+    return {
+      mensagem: `Status atualizado para ${status}`,
       pedido: order ? presentOrder(order) : null,
-    });
+    };
   }
 }

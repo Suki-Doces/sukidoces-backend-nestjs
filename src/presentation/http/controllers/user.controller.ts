@@ -74,10 +74,10 @@ export class UserController {
   @HttpCode(201)
   @ApiOperation({ summary: 'Creates a customer account' })
   async register(@Body() dto: RegisterDto) {
-    return successResponse(
-      'User created successfully',
-      presentSession(await this.registerUser.execute(dto)),
-    );
+    return {
+      message: 'User created successfully',
+      ...presentSession(await this.registerUser.execute(dto)),
+    };
   }
 
   @Throttle({ default: { limit: 5, ttl: 60_000 } })
@@ -88,7 +88,7 @@ export class UserController {
     const result = await this.login.execute(dto);
     const message =
       result.user.role === UserRole.ADMIN ? 'Admin login successful' : 'Login successful';
-    return successResponse(message, presentSession(result));
+    return { message, ...presentSession(result) };
   }
 
   @Throttle({ default: { limit: 10, ttl: 60_000 } })
@@ -153,10 +153,7 @@ export class UserController {
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   async orders(@CurrentUser('id') userId: number) {
-    return successResponse(
-      'Orders loaded successfully',
-      (await this.listOrders.execute(userId)).map(presentOrder),
-    );
+    return (await this.listOrders.execute(userId)).map(presentOrder);
   }
 
   @Patch('pedidos/:id/cancelar')
@@ -165,8 +162,9 @@ export class UserController {
   @ApiOperation({ summary: 'Cancels an order within the 2-hour window' })
   async cancel(@CurrentUser('id') userId: number, @Param('id', ParseIntPipe) orderId: number) {
     const order = await this.cancelOrder.execute(userId, orderId);
-    return successResponse('Order cancelled successfully', {
+    return {
+      mensagem: 'Pedido cancelado com sucesso!',
       pedido: order ? presentOrder(order) : null,
-    });
+    };
   }
 }

@@ -170,16 +170,16 @@ describe('Suki Doces API (integration)', () => {
     it('registers a customer and returns tokens in the contract shape', async () => {
       const res = await request(server()).post('/suki-doces/usuario/registro').send(user);
       expect(res.status).toBe(201);
-      expect(res.body.data.token).toBeDefined();
-      expect(res.body.data.refreshToken).toBeDefined();
-      expect(res.body.data.user).toMatchObject({
+      expect(res.body.token).toBeDefined();
+      expect(res.body.refreshToken).toBeDefined();
+      expect(res.body.user).toMatchObject({
         nome: 'Maria Teste',
         email: user.email,
         nivel: 'cliente',
       });
-      accessToken = res.body.data.token;
-      refreshToken = res.body.data.refreshToken;
-      userId = res.body.data.user.id;
+      accessToken = res.body.token;
+      refreshToken = res.body.refreshToken;
+      userId = res.body.user.id;
     });
 
     it('rejects a second registration with the same e-mail', async () => {
@@ -282,7 +282,7 @@ describe('Suki Doces API (integration)', () => {
       const login = await request(server())
         .post('/suki-doces/admin/login')
         .send({ email: 'admin.e2e@teste.com', senha: 'admin123' });
-      adminToken = login.body.data.token;
+      adminToken = login.body.token;
 
       const registration = await request(server()).post('/suki-doces/usuario/registro').send({
         nome: 'Joao Loja',
@@ -290,10 +290,10 @@ describe('Suki Doces API (integration)', () => {
         senha: 'senha123',
         telefone: '11988887777',
       });
-      customerToken = registration.body.data.token;
+      customerToken = registration.body.token;
       const verificationToken = await app
         .get(TokenService)
-        .signEmailVerificationToken(registration.body.data.user.id);
+        .signEmailVerificationToken(registration.body.user.id);
       await request(server())
         .get('/suki-doces/usuario/verificar-email')
         .query({ token: verificationToken })
@@ -304,7 +304,7 @@ describe('Suki Doces API (integration)', () => {
       const res = await request(server())
         .post('/suki-doces/admin/login')
         .send({ email: 'admin.e2e@teste.com', senha: 'admin123' });
-      expect(res.body.data.user.nivel).toBe('admin');
+      expect(res.body.user.nivel).toBe('admin');
       expect(res.body.message).toBe('Admin login successful');
     });
 
@@ -418,10 +418,16 @@ describe('Suki Doces API (integration)', () => {
         .send({ produtos: [{ id_produto: productId, quantidade: 2 }], metodo_pagamento: 'pix' });
 
       expect(res.status).toBe(201);
-      expect(res.body.data.pedido.valor_total).toBeCloseTo(91.8);
-      expect(res.body.data.pedido.status).toBe('pago');
-      orderId = res.body.data.pedido.id_pedido;
+      expect(res.body.pedido.valor_total).toBeCloseTo(91.8);
+      expect(res.body.pedido.status).toBe('pago');
+      orderId = res.body.pedido.id_pedido;
       expect(await stock()).toBe(8);
+
+      const userOrders = await request(server())
+        .get('/suki-doces/usuario/pedidos')
+        .set('Authorization', `Bearer ${customerToken}`);
+      expect(Array.isArray(userOrders.body)).toBe(true);
+      expect(userOrders.body[0].id_pedido).toBe(orderId);
 
       const retry = await request(server())
         .post('/suki-doces/pedidos')
@@ -429,7 +435,7 @@ describe('Suki Doces API (integration)', () => {
         .set('Idempotency-Key', 'checkout-valid')
         .send({ produtos: [{ id_produto: productId, quantidade: 2 }], metodo_pagamento: 'pix' });
       expect(retry.status).toBe(201);
-      expect(retry.body.data.pedido.id_pedido).toBe(orderId);
+      expect(retry.body.pedido.id_pedido).toBe(orderId);
       expect(await stock()).toBe(8);
 
       const keyConflict = await request(server())
@@ -457,7 +463,7 @@ describe('Suki Doces API (integration)', () => {
         .send({ email: 'maria.e2e@teste.com', senha: 'senha123' });
       const res = await request(server())
         .patch(`/suki-doces/usuario/pedidos/${orderId}/cancelar`)
-        .set('Authorization', `Bearer ${maria.body.data.token}`);
+        .set('Authorization', `Bearer ${maria.body.token}`);
       expect(res.status).toBe(403);
       expect(await stock()).toBe(8);
     });
@@ -467,7 +473,7 @@ describe('Suki Doces API (integration)', () => {
         .patch(`/suki-doces/usuario/pedidos/${orderId}/cancelar`)
         .set('Authorization', `Bearer ${customerToken}`);
       expect(res.status).toBe(200);
-      expect(res.body.data.pedido.status).toBe('cancelado');
+      expect(res.body.pedido.status).toBe('cancelado');
       expect(await stock()).toBe(10);
     });
 
@@ -486,14 +492,14 @@ describe('Suki Doces API (integration)', () => {
         .set('Authorization', `Bearer ${customerToken}`)
         .set('Idempotency-Key', 'checkout-bank-slip')
         .send({ produtos: [{ id_produto: productId, quantidade: 1 }], metodo_pagamento: 'boleto' });
-      expect(created.body.data.pedido.status).toBe('pendente');
-      const id = created.body.data.pedido.id_pedido;
+      expect(created.body.pedido.status).toBe('pendente');
+      const id = created.body.pedido.id_pedido;
 
       const paid = await request(server())
         .post(`/suki-doces/pedidos/${id}/pagar`)
         .set('Authorization', `Bearer ${customerToken}`);
-      expect(paid.status).toBe(201);
-      expect(paid.body.data.pedido.status).toBe('pago');
+      expect(paid.status).toBe(200);
+      expect(paid.body.pedido.status).toBe('pago');
 
       const again = await request(server())
         .post(`/suki-doces/pedidos/${id}/pagar`)
@@ -504,11 +510,12 @@ describe('Suki Doces API (integration)', () => {
 
     it('admin changes an order status', async () => {
       const res = await request(server())
-        .patch(`/suki-doces/admin/pedidos/${orderId}/status`)
+        .patch(`/suki-doces/pedidos/${orderId}/status`)
         .set('Authorization', `Bearer ${adminToken}`)
         .send({ status: 'enviado' });
       expect(res.status).toBe(200);
-      expect(res.body.data.pedido.status).toBe('enviado');
+      expect(res.body.mensagem).toBe('Status atualizado para enviado');
+      expect(res.body.pedido.status).toBe('enviado');
     });
 
     it('saves admin notifications under the admin foreign key', async () => {
@@ -539,10 +546,17 @@ describe('Suki Doces API (integration)', () => {
         .get('/suki-doces/admin/pedidos')
         .set('Authorization', `Bearer ${adminToken}`);
       expect(orders.status).toBe(200);
-      expect(orders.body.data[0]).toMatchObject({
+      expect(Array.isArray(orders.body)).toBe(true);
+      expect(orders.body[0]).toMatchObject({
         cliente_nome: 'Joao Loja',
         itens: expect.any(Array),
       });
+
+      const panelOrders = await request(server())
+        .get('/suki-doces/pedidos')
+        .set('Authorization', `Bearer ${adminToken}`);
+      expect(panelOrders.status).toBe(200);
+      expect(Array.isArray(panelOrders.body)).toBe(true);
 
       const customers = await request(server())
         .get('/suki-doces/admin/clientes')

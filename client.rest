@@ -3,7 +3,7 @@
 # Elas NAO sao preenchidas automaticamente pelas respostas da API.
 # Depois do login, copie data.accessToken para @token.
 # Substitua os IDs de exemplo/placeholder pelos IDs retornados pela API.
-@baseUrl = http://localhost:3000
+@baseUrl = https://sukidoces-backend-nestjs.onrender.com
 @apiUrl = {{baseUrl}}/suki-doces
 @token = COLE_O_ACCESS_TOKEN_AQUI
 @refreshToken = COLE_O_REFRESH_TOKEN_AQUI

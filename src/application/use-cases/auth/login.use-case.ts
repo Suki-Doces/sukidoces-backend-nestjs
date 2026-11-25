@@ -2,7 +2,13 @@ import { Injectable } from '@nestjs/common';
 import { UserRole } from '@domain/enums';
 import { AdminRepository, UserRepository } from '@domain/repositories';
 import { UnauthorizedError } from '@application/errors';
-import { PasswordHasher, RefreshTokenStore, TokenPair, TokenService } from '@application/ports';
+import {
+  AuthSettings,
+  PasswordHasher,
+  RefreshTokenStore,
+  TokenPair,
+  TokenService,
+} from '@application/ports';
 import { registerRefreshSession } from './register-refresh-session';
 
 export interface LoginInput {
@@ -32,6 +38,7 @@ export class LoginUseCase {
     private readonly hasher: PasswordHasher,
     private readonly tokens: TokenService,
     private readonly refreshTokens: RefreshTokenStore,
+    private readonly authSettings: AuthSettings,
   ) {}
 
   async execute(input: LoginInput): Promise<LoginResult> {
@@ -42,7 +49,7 @@ export class LoginUseCase {
       await this.assertPassword(input.password, user.password, (hash) =>
         this.users.updatePassword(user.id, hash),
       );
-      if (!user.emailVerified) {
+      if (this.authSettings.emailVerificationRequired && !user.emailVerified) {
         throw new UnauthorizedError('Email address is not verified');
       }
       const tokens = await this.tokens.issuePair({

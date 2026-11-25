@@ -14,7 +14,10 @@ export class TypeOrmCategoryRepository implements CategoryRepository {
   }
 
   findAllPublic() {
-    return this.repo.find({ select: ['id', 'name', 'description'], order: { name: 'ASC' } });
+    return this.repo.find({
+      select: { id: true, name: true, description: true },
+      order: { name: 'ASC' },
+    });
   }
 
   create(data: { name: string; description?: string }) {

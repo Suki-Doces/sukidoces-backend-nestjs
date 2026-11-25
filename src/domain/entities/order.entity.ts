@@ -14,12 +14,17 @@ const CANCELLATION_WINDOW_HOURS = 2;
 export class Order {
   id: number;
   userId: number;
+  /** Grand total charged: products - coupon discount + shipping. */
   totalAmount: number;
+  /** Shipping part of `totalAmount` (0 when free and for legacy orders). */
+  shippingAmount: number;
   status: string;
   paymentMethod: string | null;
   couponId: number | null;
   idempotencyKey: string | null;
   requestHash: string | null;
+  /** Channel that placed the order ('web' | 'mobile'); null for legacy orders. */
+  origin: string | null;
   createdAt: Date;
   user?: User;
   items?: OrderItem[];
@@ -33,18 +38,22 @@ export class Order {
   static place(input: {
     userId: number;
     totalAmount: number;
+    shippingAmount?: number;
     paymentMethod: string;
     couponId?: number | null;
     idempotencyKey?: string | null;
     requestHash?: string | null;
+    origin?: string | null;
   }): Order {
     return new Order({
       userId: input.userId,
       totalAmount: input.totalAmount,
+      shippingAmount: input.shippingAmount ?? 0,
       paymentMethod: input.paymentMethod,
       couponId: input.couponId ?? null,
       idempotencyKey: input.idempotencyKey ?? null,
       requestHash: input.requestHash ?? null,
+      origin: input.origin ?? null,
       status: INSTANT_PAYMENT_METHODS.includes(input.paymentMethod)
         ? OrderStatus.PAID
         : OrderStatus.PENDING,

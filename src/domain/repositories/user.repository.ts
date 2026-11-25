@@ -7,6 +7,7 @@ export interface CreateUserData {
   phone?: string;
   role?: string;
   active?: boolean;
+  emailVerified?: boolean;
 }
 
 export interface CustomerOrderStats {

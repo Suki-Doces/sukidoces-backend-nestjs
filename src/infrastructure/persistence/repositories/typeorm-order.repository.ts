@@ -17,20 +17,20 @@ export class TypeOrmOrderRepository implements OrderRepository {
   }
 
   findByIdWithItems(id: number) {
-    return this.orders.findOne({ where: { id }, relations: ['items'] });
+    return this.orders.findOne({ where: { id }, relations: { items: true } });
   }
 
   findAllWithDetails() {
     return this.orders.find({
       order: { createdAt: 'DESC' },
-      relations: ['user', 'items', 'items.product'],
+      relations: { user: true, items: { product: true } },
     });
   }
 
   findByUser(userId: number) {
     return this.orders.find({
       where: { userId },
-      relations: ['items', 'items.product'],
+      relations: { items: { product: true } },
       order: { createdAt: 'DESC' },
     });
   }
@@ -57,7 +57,7 @@ export class TypeOrmOrderRepository implements OrderRepository {
   }
 
   findRecent(take: number) {
-    return this.orders.find({ take, order: { createdAt: 'DESC' }, relations: ['user'] });
+    return this.orders.find({ take, order: { createdAt: 'DESC' }, relations: { user: true } });
   }
 
   async bestSellingProducts(take: number) {

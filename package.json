@@ -12,6 +12,7 @@
     "start": "nest start",
     "start:dev": "nest start --watch",
     "start:prod": "node dist/src/main.js",
+    "start:memory": "ts-node -r tsconfig-paths/register scripts/start-memory.ts",
     "test": "jest --config ./test/jest-e2e.json --coverage",
     "test:e2e": "jest --config ./test/jest-e2e.json",
     "lint": "eslint \"src/**/*.ts\" \"test/**/*.ts\" \"scripts/**/*.js\" \"eslint.config.mjs\"",
@@ -54,11 +55,11 @@
     "prom-client": "^15.1.3",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",
-    "typeorm": "^0.3.31"
+    "typeorm": "^1.1.3"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
-    "@nestjs/cli": "^11.0.24",
+    "@nestjs/cli": "^12.0.15",
     "@nestjs/schematics": "^11.1.0",
     "@nestjs/testing": "^11.1.1",
     "@types/bcrypt": "^5.0.2",

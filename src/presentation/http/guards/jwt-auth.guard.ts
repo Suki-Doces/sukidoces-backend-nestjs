@@ -1,6 +1,6 @@
 import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
 import { InvalidTokenError, UnauthorizedError } from '@application/errors';
-import { TokenService } from '@application/ports';
+import { AuthSettings, TokenService } from '@application/ports';
 import { UserRole } from '@domain/enums';
 import { UserRepository } from '@domain/repositories';
 import { RequestWithUser } from '@presentation/http/support';
@@ -10,6 +10,7 @@ export class JwtAuthGuard implements CanActivate {
   constructor(
     private readonly tokens: TokenService,
     private readonly users: UserRepository,
+    private readonly authSettings: AuthSettings,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -34,7 +35,7 @@ export class JwtAuthGuard implements CanActivate {
 
     if (claims.role !== UserRole.ADMIN) {
       const user = await this.users.findById(claims.id);
-      if (!user?.emailVerified) {
+      if (!user || (this.authSettings.emailVerificationRequired && !user.emailVerified)) {
         throw new UnauthorizedError('Email address is not verified');
       }
     }

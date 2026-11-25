@@ -2,6 +2,7 @@ import { CacheModule } from '@nestjs/cache-manager';
 import { Global, Module } from '@nestjs/common';
 import {
   AppLogger,
+  AuthSettings,
   CacheStore,
   ChatAssistant,
   EmailSender,
@@ -42,6 +43,7 @@ import {
 import { PersistenceModule } from '@infrastructure/persistence';
 import {
   BcryptPasswordHasher,
+  ConfigAuthSettings,
   JwtTokenService,
   Sha256RequestHasher,
 } from '@infrastructure/security';
@@ -59,6 +61,7 @@ import {
   ],
   providers: [
     { provide: PasswordHasher, useClass: BcryptPasswordHasher },
+    { provide: AuthSettings, useClass: ConfigAuthSettings },
     { provide: TokenService, useClass: JwtTokenService },
     { provide: RequestHasher, useClass: Sha256RequestHasher },
     { provide: ImageStorage, useClass: CloudinaryImageStorage },
@@ -84,6 +87,7 @@ import {
   ],
   exports: [
     PersistenceModule,
+    AuthSettings,
     PasswordHasher,
     TokenService,
     RequestHasher,

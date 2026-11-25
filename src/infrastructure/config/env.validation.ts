@@ -27,6 +27,9 @@ export const envValidationSchema = Joi.object({
 
   SENTRY_DSN: Joi.string().allow('').optional(),
 
+  /** false = customer accounts can sign in without confirming their e-mail first. */
+  EMAIL_VERIFICATION_REQUIRED: Joi.boolean().default(true),
+
   SMTP_HOST: Joi.string().allow('').optional(),
   SMTP_PORT: Joi.number().optional(),
   SMTP_USER: Joi.string().allow('').optional(),

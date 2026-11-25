@@ -8,7 +8,9 @@ export interface AdminOrderView {
   createdAt: Date;
   status: string;
   totalAmount: number;
+  shippingAmount: number;
   paymentMethod: string | null;
+  origin: string | null;
   items: { name?: string; quantity: number; image?: string | null }[];
 }
 
@@ -26,7 +28,9 @@ export class ListAllOrdersUseCase {
       createdAt: order.createdAt,
       status: order.status,
       totalAmount: Number(order.totalAmount),
+      shippingAmount: Number(order.shippingAmount ?? 0),
       paymentMethod: order.paymentMethod,
+      origin: order.origin ?? null,
       items: (order.items ?? []).map((item) => ({
         name: item.product?.name,
         quantity: item.quantity,

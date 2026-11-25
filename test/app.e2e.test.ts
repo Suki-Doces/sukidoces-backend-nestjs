@@ -368,7 +368,59 @@ describe('Suki Doces API (integration)', () => {
       expect(await stock()).toBe(10);
     });
 
-    it('supports the legacy cart payload and computes totals and shipping', async () => {
+    it('quotes shipping on a public endpoint, free above the threshold of the zone', async () => {
+      const quote = (body: object) =>
+        request(server()).post('/suki-doces/frete/calcular').send(body);
+
+      const paid = await quote({ subtotal: 19.8, estado: 'SP', cidade: 'Santo André' });
+      expect(paid.status).toBe(200);
+      expect(paid.body.data).toMatchObject({
+        frete: 9.9,
+        frete_gratis: false,
+        frete_gratis_a_partir_de: 100,
+        zona: 'SP_METRO',
+      });
+
+      const free = await quote({ subtotal: 100, estado: 'SP', cidade: 'Santo André' });
+      expect(free.body.data).toMatchObject({ frete: 0, frete_gratis: true });
+
+      const far = await quote({ subtotal: 60, estado: 'AM' });
+      expect(far.body.data).toMatchObject({ frete: 38.9, zona: 'NORTH_NORTHEAST_MIDWEST' });
+
+      expect((await quote({ subtotal: 60, estado: 'SP' })).status).toBe(400);
+      expect((await quote({ subtotal: 60, estado: 'XX', cidade: 'A' })).status).toBe(400);
+      expect((await quote({ estado: 'RJ' })).status).toBe(400);
+    });
+
+    it('refuses a checkout without any delivery address (400) and leaves the stock alone', async () => {
+      const res = await request(server())
+        .post('/suki-doces/pedidos')
+        .set('Authorization', `Bearer ${customerToken}`)
+        .set('Idempotency-Key', 'checkout-no-address')
+        .send({ produtos: [{ id_produto: productId, quantidade: 1 }], metodo_pagamento: 'pix' });
+
+      expect(res.status).toBe(400);
+      expect(res.body.message).toBe('Delivery address is required to calculate shipping');
+      expect(await stock()).toBe(10);
+    });
+
+    it('refuses a checkout to an unknown state (400)', async () => {
+      const res = await request(server())
+        .post('/suki-doces/pedidos')
+        .set('Authorization', `Bearer ${customerToken}`)
+        .set('Idempotency-Key', 'checkout-bad-address')
+        .send({
+          produtos: [{ id_produto: productId, quantidade: 1 }],
+          metodo_pagamento: 'pix',
+          endereco_entrega: { estado: 'XX', cidade: 'Nowhere' },
+        });
+
+      expect(res.status).toBe(400);
+      expect(res.body.message).toContain('Invalid delivery address');
+      expect(await stock()).toBe(10);
+    });
+
+    it('supports the legacy cart payload and quotes shipping by destination', async () => {
       const add = await request(server())
         .post('/suki-doces/carrinho/add')
         .set('Authorization', `Bearer ${customerToken}`)
@@ -383,8 +435,40 @@ describe('Suki Doces API (integration)', () => {
         quantidade: 1,
         total: 45.9,
       });
-      expect(cart.body.data.frete).toBe(8.9);
-      expect(cart.body.data.freteGratis).toBe(false);
+      // No destination yet (no saved address, none sent): shipping is decided later.
+      expect(cart.body.data).toMatchObject({ frete: 0, freteCalculado: false, total: 45.9 });
+
+      const diadema = await request(server())
+        .get('/suki-doces/carrinho?estado=SP&cidade=Diadema')
+        .set('Authorization', `Bearer ${customerToken}`);
+      expect(diadema.body.data).toMatchObject({ frete: 5.9, freteCalculado: true, total: 51.8 });
+
+      const bahia = await request(server())
+        .get('/suki-doces/carrinho?estado=BA&cidade=Salvador')
+        .set('Authorization', `Bearer ${customerToken}`);
+      expect(bahia.body.data).toMatchObject({ frete: 38.9, freteCalculado: true });
+
+      const unknownState = await request(server())
+        .get('/suki-doces/carrinho?estado=XX&cidade=Nowhere')
+        .set('Authorization', `Bearer ${customerToken}`);
+      expect(unknownState.body.data).toMatchObject({ frete: 0, freteCalculado: false });
+
+      // The customer saves an address: it becomes the default destination for cart and checkout.
+      const saved = await request(server())
+        .put('/suki-doces/usuario/perfil')
+        .set('Authorization', `Bearer ${customerToken}`)
+        .send({ enderecos: [{ cep: '09010-000', cidade: 'Santo André', estado: 'SP' }] });
+      expect(saved.status).toBe(200);
+
+      const withAddress = await request(server())
+        .get('/suki-doces/carrinho')
+        .set('Authorization', `Bearer ${customerToken}`);
+      expect(withAddress.body.data).toMatchObject({
+        frete: 9.9,
+        freteGratis: false,
+        freteCalculado: true,
+        total: 55.8,
+      });
 
       const itemId = cart.body.data.cartItems[0].id;
       const tooMany = await request(server())
@@ -418,7 +502,9 @@ describe('Suki Doces API (integration)', () => {
         .send({ produtos: [{ id_produto: productId, quantidade: 2 }], metodo_pagamento: 'pix' });
 
       expect(res.status).toBe(201);
-      expect(res.body.pedido.valor_total).toBeCloseTo(91.8);
+      // 2 x R$ 45,90 = R$ 91,80 (below R$ 100) + R$ 9,90 for Santo André (the saved address).
+      expect(res.body.pedido.valor_total).toBeCloseTo(101.7);
+      expect(res.body.pedido.valor_frete).toBeCloseTo(9.9);
       expect(res.body.pedido.status).toBe('pago');
       orderId = res.body.pedido.id_pedido;
       expect(await stock()).toBe(8);
@@ -454,7 +540,7 @@ describe('Suki Doces API (integration)', () => {
       const customer = response.body.data.clientes.find(
         (item: { email: string }) => item.email === 'joao.loja@teste.com',
       );
-      expect(customer).toMatchObject({ valor_total: 91.8, total_pedidos: 1 });
+      expect(customer).toMatchObject({ valor_total: 101.7, total_pedidos: 1 });
     });
 
     it("another user cannot cancel someone else's order (403)", async () => {

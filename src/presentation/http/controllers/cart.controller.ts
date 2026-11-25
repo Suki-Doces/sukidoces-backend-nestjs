@@ -7,9 +7,10 @@ import {
   ParseIntPipe,
   Post,
   Put,
+  Query,
   UseGuards,
 } from '@nestjs/common';
-import { ApiTags } from '@nestjs/swagger';
+import { ApiQuery, ApiTags } from '@nestjs/swagger';
 import {
   AddToCartUseCase,
   ClearCartUseCase,
@@ -36,10 +37,16 @@ export class CartController {
   ) {}
 
   @Get()
-  async list(@CurrentUser('id') userId: number) {
+  @ApiQuery({ name: 'estado', required: false, description: 'Destination state (UF)' })
+  @ApiQuery({ name: 'cidade', required: false, description: 'Destination city' })
+  async list(
+    @CurrentUser('id') userId: number,
+    @Query('estado') state?: string,
+    @Query('cidade') city?: string,
+  ) {
     return successResponse(
       'Cart loaded successfully',
-      presentCart(await this.listCart.execute(userId)),
+      presentCart(await this.listCart.execute(userId, { state, city })),
     );
   }
 

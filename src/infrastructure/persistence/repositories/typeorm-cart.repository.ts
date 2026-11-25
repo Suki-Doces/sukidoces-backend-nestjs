@@ -9,7 +9,7 @@ export class TypeOrmCartRepository implements CartRepository {
     return this.repo.find({
       where: { userId },
       order: { addedAt: 'DESC' },
-      relations: ['product'],
+      relations: { product: true },
     });
   }
 
@@ -18,7 +18,7 @@ export class TypeOrmCartRepository implements CartRepository {
   }
 
   findByIdWithProduct(id: number) {
-    return this.repo.findOne({ where: { id }, relations: ['product'] });
+    return this.repo.findOne({ where: { id }, relations: { product: true } });
   }
 
   findById(id: number) {

@@ -274,6 +274,26 @@ PUT /suki-doces/admin/clientes/{id}
 DELETE /suki-doces/admin/clientes/{id}
   Remove o cliente indicado por @clienteId. Confira o ID antes de enviar.
 
+6b. FRETE (origem: Diadema - SP)
+--------------------------------
+
+POST /suki-doces/frete/calcular   (publica)
+  JSON: subtotal (numero), estado (UF), cidade (obrigatoria quando estado = SP)
+  Resposta: frete, frete_gratis, frete_padrao, frete_gratis_a_partir_de, zona.
+  Regra (unica, no servidor; frete gratis pelo subtotal dos produtos, antes do cupom):
+    Diadema ......................... R$ 5,90   gratis a partir de R$ 50
+    Sao Paulo, Sao Bernardo, Santo Andre, Sao Caetano, Maua,
+    Ribeirao Pires, Rio Grande da Serra R$ 9,90   gratis a partir de R$ 100
+    Demais cidades de SP ............ R$ 16,90  gratis a partir de R$ 150
+    RJ, MG, ES, PR, SC, RS .......... R$ 24,90  gratis a partir de R$ 250
+    Demais estados .................. R$ 38,90  gratis a partir de R$ 250
+
+POST /suki-doces/pedidos
+  Alem de produtos e metodo_pagamento, aceita endereco_entrega
+  { estado, cidade }. Sem ele usa o endereco principal da conta; se nao houver
+  nenhum, responde 400. O cliente NUNCA envia o valor do frete: o servidor
+  calcula, soma ao total (valor_total) e grava a parte do frete em valor_frete.
+
 7. CARRINHO
 -----------
 
@@ -282,6 +302,10 @@ Todas as rotas do carrinho precisam de token de usuario autenticado.
 GET /suki-doces/carrinho
   Consulta os itens do seu carrinho. Use a resposta para obter o ID do
   item, que e diferente do ID do produto.
+  Query opcional: estado (UF) e cidade. O frete usa esse destino; sem ele,
+  usa o endereco principal salvo na conta; sem nenhum dos dois,
+  frete = 0 e freteCalculado = false (o frete e decidido no checkout).
+  Resposta traz subtotal, frete, freteGratis, freteCalculado e total.
 
 POST /suki-doces/carrinho/add
   Adiciona produto ao carrinho. JSON:

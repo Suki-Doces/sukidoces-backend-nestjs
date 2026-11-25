@@ -16,7 +16,7 @@ export function applyCors(app: INestApplication, configuredOrigins?: string): vo
     },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'Idempotency-Key'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'Idempotency-Key', 'X-Client-Platform'],
   };
   app.enableCors(corsOptions);
 }

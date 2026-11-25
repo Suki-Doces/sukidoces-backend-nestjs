@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { OnEvent } from '@nestjs/event-emitter';
 import { NotifyAdminUseCase } from '@application/use-cases/notifications';
-import { NotificationType } from '@domain/enums';
+import { NotificationType, OrderOrigin } from '@domain/enums';
 import {
   DomainEventNames,
   OrderCancelledEvent,
@@ -10,6 +10,11 @@ import {
   OrderStatusUpdatedEvent,
   UserRegisteredEvent,
 } from '@domain/events';
+
+const ORIGIN_LABELS: Record<string, string> = {
+  [OrderOrigin.WEB]: ' (website)',
+  [OrderOrigin.MOBILE]: ' (mobile app)',
+};
 
 /** Turns domain events into in-app notifications for the administrator. */
 @Injectable()
@@ -29,7 +34,7 @@ export class AdminNotificationHandler {
   onOrderCreated(event: OrderCreatedEvent) {
     return this.notifyAdmin.execute({
       title: 'New Suki Doces Order!',
-      message: `Order #${event.orderId} of R$ ${event.totalAmount.toFixed(2)}.`,
+      message: `Order #${event.orderId} of R$ ${event.totalAmount.toFixed(2)}${ORIGIN_LABELS[event.origin ?? ''] ?? ''}.`,
       type: NotificationType.SALE,
     });
   }

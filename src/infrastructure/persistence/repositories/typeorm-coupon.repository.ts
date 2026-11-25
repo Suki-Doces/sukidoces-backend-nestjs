@@ -10,6 +10,8 @@ export class TypeOrmCouponRepository implements CouponRepository {
   }
 
   findAll() {
-    return this.repo.find({ select: ['id', 'code', 'type', 'value', 'expiresAt', 'active'] });
+    return this.repo.find({
+      select: { id: true, code: true, type: true, value: true, expiresAt: true, active: true },
+    });
   }
 }

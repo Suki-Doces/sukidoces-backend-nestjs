@@ -13,3 +13,4 @@ export * from './request-hasher';
 export * from './token-service';
 export * from './unit-of-work';
 export * from './webhook-client';
+export * from './auth-settings';

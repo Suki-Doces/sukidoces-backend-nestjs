@@ -6,4 +6,5 @@ export abstract class ContactMessageRepository {
   abstract findAll(): Promise<ContactMessage[]>;
   abstract findById(id: number): Promise<ContactMessage | null>;
   abstract save(message: ContactMessage): Promise<ContactMessage>;
+  abstract deleteById(id: number): Promise<void>;
 }

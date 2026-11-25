@@ -23,6 +23,7 @@ export class OrderCreatedEvent implements DomainEvent {
   constructor(
     public readonly orderId: number,
     public readonly totalAmount: number,
+    public readonly origin: string | null = null,
   ) {}
 }
 

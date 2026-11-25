@@ -18,6 +18,12 @@ export class ContactMessage {
     if (props) Object.assign(this, props);
   }
 
+  /** Closes the message without a written reply. */
+  markAsHandled(now: Date = new Date()): void {
+    this.answered = true;
+    this.answeredAt = now;
+  }
+
   respond(answer: string, now: Date = new Date()): void {
     this.answered = true;
     this.answer = answer.trim();

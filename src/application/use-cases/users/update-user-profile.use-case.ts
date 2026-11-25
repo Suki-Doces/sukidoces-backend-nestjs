@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { User, UserProfile } from '@domain/entities';
 import { UserRepository } from '@domain/repositories';
 import { ImageStorage } from '@application/ports';
+import { normalizeAddresses } from './normalize-addresses';
 
 export interface UpdateUserProfileInput {
   userId: number;
@@ -25,6 +26,10 @@ export class UpdateUserProfileUseCase {
     let addresses = input.addresses;
     if (typeof addresses === 'string') {
       addresses = JSON.parse(addresses);
+    }
+    if (addresses !== undefined && addresses !== null) {
+      const current = await this.users.findById(input.userId);
+      addresses = normalizeAddresses(addresses, current?.addresses);
     }
 
     const changes: Partial<User> = {

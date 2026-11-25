@@ -124,11 +124,13 @@ export const OrderSchema = new EntitySchema<Order>({
     id: { type: Number, name: 'id_pedido', primary: true, generated: 'increment' },
     userId: { type: Number, name: 'id_usuario' },
     totalAmount: { ...decimal, name: 'valor_total' },
+    shippingAmount: { ...decimal, name: 'valor_frete', default: 0 },
     status: { type: String },
     paymentMethod: { type: String, name: 'metodo_pagamento', nullable: true },
     couponId: { type: Number, name: 'id_cupom', nullable: true },
     idempotencyKey: { type: String, name: 'idempotency_key', length: 255, nullable: true },
     requestHash: { type: String, name: 'request_hash', length: 64, nullable: true },
+    origin: { type: String, name: 'origem', length: 20, nullable: true },
     createdAt: { type: Date, name: 'data_pedido', createDate: true },
   },
   indices: [

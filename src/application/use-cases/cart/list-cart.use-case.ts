@@ -1,7 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { Product } from '@domain/entities';
 import { CartRepository } from '@domain/repositories';
+import { quoteShipping } from '@domain/shipping';
 import { InternalError } from '@application/errors';
+import { DestinationInput, ShippingDestinationResolver } from '@application/shipping';
 
 export interface CartLine {
   id: number;
@@ -19,17 +21,20 @@ export interface CartSummary {
   shipping: number;
   total: number;
   freeShipping: boolean;
+  /** False while no usable destination is known: shipping is then 0 and decided at checkout. */
+  shippingCalculated: boolean;
   itemCount: number;
 }
 
-const FREE_SHIPPING_THRESHOLD = 50;
-const SHIPPING_FEE = 8.9;
-
 @Injectable()
 export class ListCartUseCase {
-  constructor(private readonly cart: CartRepository) {}
+  constructor(
+    private readonly cart: CartRepository,
+    private readonly destinations: ShippingDestinationResolver,
+  ) {}
 
-  async execute(userId: number): Promise<CartSummary> {
+  /** Shipping depends on where the order goes: the sent destination, else the saved main address. */
+  async execute(userId: number, destinationInput?: DestinationInput): Promise<CartSummary> {
     const items = await this.cart.findByUser(userId);
 
     const cartItems: CartLine[] = items.map((item) => {
@@ -50,15 +55,20 @@ export class ListCartUseCase {
     });
 
     const subtotal = cartItems.reduce((sum, line) => sum + line.total, 0);
-    const freeShipping = subtotal >= FREE_SHIPPING_THRESHOLD;
-    const shipping = freeShipping ? 0 : SHIPPING_FEE;
+
+    const resolved = cartItems.length
+      ? await this.destinations.resolve(userId, destinationInput)
+      : ({ status: 'missing' } as const);
+    const quote = resolved.status === 'ok' ? quoteShipping(subtotal, resolved.destination) : null;
+    const shipping = quote?.amount ?? 0;
 
     return {
       cartItems,
       subtotal,
       shipping,
       total: subtotal + shipping,
-      freeShipping,
+      freeShipping: quote?.freeShipping ?? false,
+      shippingCalculated: quote !== null,
       itemCount: items.length,
     };
   }

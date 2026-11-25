@@ -5,6 +5,12 @@ import { InsufficientStockError, OrderAlreadyProcessedError } from '@domain/erro
 import { OrderStatus } from '@domain/enums';
 import { CouponRepository, OrderRepository, ProductRepository } from '@domain/repositories';
 import { EventPublisher, RequestHasher, TransactionContext, UnitOfWork } from '@application/ports';
+import { ShippingDestinationResolver } from '@application/shipping';
+
+const resolverTo = (state: string, city: string) =>
+  ({
+    resolve: jest.fn().mockResolvedValue({ status: 'ok', destination: { state, city } }),
+  }) as unknown as ShippingDestinationResolver;
 
 describe('domain entities', () => {
   it('prevents stock from becoming negative', () => {
@@ -63,6 +69,7 @@ describe('CheckoutUseCase', () => {
       unitOfWork,
       events,
       requestHasher,
+      resolverTo('SP', 'DIADEMA'),
     );
     const input = {
       userId: 7,
@@ -76,6 +83,9 @@ describe('CheckoutUseCase', () => {
 
     expect(first).toBe(retry);
     expect(first.idempotencyKey).toBe(input.idempotencyKey);
+    // 2 x R$ 10 = R$ 20 (below the R$ 50 Diadema threshold) + R$ 5,90 shipping.
+    expect(first.shippingAmount).toBe(5.9);
+    expect(first.totalAmount).toBe(25.9);
     expect(products.findManyByIds).toHaveBeenCalledTimes(1);
     expect(transactionProducts.decreaseStock).toHaveBeenCalledTimes(1);
     expect(events.publish).toHaveBeenCalledTimes(1);
@@ -99,6 +109,7 @@ describe('CheckoutUseCase', () => {
       {} as UnitOfWork,
       {} as EventPublisher,
       { hash: (value: string) => value } as RequestHasher,
+      resolverTo('SP', 'DIADEMA'),
     );
 
     await expect(
@@ -109,5 +120,46 @@ describe('CheckoutUseCase', () => {
         idempotencyKey: 'checkout-123',
       }),
     ).rejects.toThrow('Idempotency-Key has already been used with a different checkout request');
+  });
+
+  const buildFor = (resolved: unknown) => {
+    const savedProducts = {
+      findManyByIds: jest
+        .fn()
+        .mockResolvedValue([new Product({ id: 3, name: 'Bolo', quantity: 5, price: 10 })]),
+    } as unknown as ProductRepository;
+    const noOrders = {
+      findByIdempotencyKey: jest.fn().mockResolvedValue(null),
+    } as unknown as OrderRepository;
+    const resolver = {
+      resolve: jest.fn().mockResolvedValue(resolved),
+    } as unknown as ShippingDestinationResolver;
+    return new CheckoutUseCase(
+      savedProducts,
+      {} as CouponRepository,
+      noOrders,
+      {} as UnitOfWork,
+      { publish: jest.fn() } as unknown as EventPublisher,
+      { hash: (value: string) => value } as RequestHasher,
+      resolver,
+    );
+  };
+  const checkoutInput = {
+    userId: 7,
+    items: [{ productId: 3, quantity: 1 }],
+    paymentMethod: 'pix',
+    idempotencyKey: 'k-1',
+  };
+
+  it('refuses to check out without a delivery address', async () => {
+    await expect(buildFor({ status: 'missing' }).execute(checkoutInput)).rejects.toThrow(
+      'Delivery address is required to calculate shipping',
+    );
+  });
+
+  it('refuses a delivery address whose state or city is unusable', async () => {
+    await expect(buildFor({ status: 'invalid' }).execute(checkoutInput)).rejects.toThrow(
+      'Invalid delivery address',
+    );
   });
 });

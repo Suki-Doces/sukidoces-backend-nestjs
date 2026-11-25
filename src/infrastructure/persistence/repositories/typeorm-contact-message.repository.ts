@@ -24,4 +24,8 @@ export class TypeOrmContactMessageRepository implements ContactMessageRepository
   save(message: ContactMessage) {
     return this.repo.save(message);
   }
+
+  async deleteById(id: number) {
+    await this.repo.delete({ id });
+  }
 }

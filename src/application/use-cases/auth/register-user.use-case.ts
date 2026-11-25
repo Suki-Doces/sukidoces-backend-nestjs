@@ -4,6 +4,7 @@ import { UserRegisteredEvent } from '@domain/events';
 import { UserRepository } from '@domain/repositories';
 import { BadRequestError } from '@application/errors';
 import {
+  AuthSettings,
   EmailSender,
   EventPublisher,
   PasswordHasher,
@@ -28,6 +29,7 @@ export interface RegisterUserResult extends TokenPair {
     role: string | null;
     createdAt: Date;
     profilePhoto: string | null;
+    emailVerified: boolean;
   };
 }
 
@@ -40,6 +42,7 @@ export class RegisterUserUseCase {
     private readonly events: EventPublisher,
     private readonly emailSender: EmailSender,
     private readonly refreshTokens: RefreshTokenStore,
+    private readonly authSettings: AuthSettings,
   ) {}
 
   async execute(input: RegisterUserInput): Promise<RegisterUserResult> {
@@ -56,12 +59,15 @@ export class RegisterUserUseCase {
       phone: input.phone,
       role: UserRole.CUSTOMER,
       active: true,
+      emailVerified: !this.authSettings.emailVerificationRequired,
     });
 
     this.events.publish(new UserRegisteredEvent(user.name));
 
-    const verificationToken = await this.tokens.signEmailVerificationToken(user.id);
-    void this.emailSender.sendVerificationEmail(user.email, verificationToken);
+    if (this.authSettings.emailVerificationRequired) {
+      const verificationToken = await this.tokens.signEmailVerificationToken(user.id);
+      void this.emailSender.sendVerificationEmail(user.email, verificationToken);
+    }
 
     const tokens = await this.tokens.issuePair({ id: user.id, email: user.email, role: user.role });
     await registerRefreshSession(this.tokens, this.refreshTokens, tokens, {
@@ -79,6 +85,7 @@ export class RegisterUserUseCase {
         role: user.role,
         createdAt: user.createdAt,
         profilePhoto: user.profilePhoto,
+        emailVerified: !this.authSettings.emailVerificationRequired,
       },
     };
   }

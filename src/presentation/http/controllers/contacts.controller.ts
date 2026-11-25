@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   HttpCode,
   Param,
@@ -14,8 +15,10 @@ import { TokenClaims } from '@application/ports';
 import {
   AnswerContactMessageUseCase,
   CreateContactMessageUseCase,
+  DeleteContactMessageUseCase,
   ListContactMessagesUseCase,
   ListMyContactMessagesUseCase,
+  MarkContactMessageHandledUseCase,
 } from '@application/use-cases/contacts';
 
 import { CurrentUser } from '@presentation/http/decorators';
@@ -60,6 +63,8 @@ export class AdminContactsController {
   constructor(
     private readonly listMessages: ListContactMessagesUseCase,
     private readonly answerMessage: AnswerContactMessageUseCase,
+    private readonly markHandled: MarkContactMessageHandledUseCase,
+    private readonly deleteMessage: DeleteContactMessageUseCase,
   ) {}
 
   @Get()
@@ -76,5 +81,19 @@ export class AdminContactsController {
     return successResponse('Reply saved successfully.', {
       contato: presentContactMessage(message),
     });
+  }
+
+  @Put(':id/mark-read')
+  async markRead(@Param('id', ParseIntPipe) id: number) {
+    const message = await this.markHandled.execute(id);
+    return successResponse('Message marked as handled.', {
+      contato: presentContactMessage(message),
+    });
+  }
+
+  @Delete(':id')
+  async remove(@Param('id', ParseIntPipe) id: number) {
+    await this.deleteMessage.execute(id);
+    return successResponse('Message deleted.');
   }
 }

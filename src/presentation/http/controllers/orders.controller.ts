@@ -49,21 +49,32 @@ export class OrdersController {
     required: true,
     description: 'Unique key for this checkout attempt',
   })
+  @ApiHeader({
+    name: 'X-Client-Platform',
+    required: false,
+    description: 'Sales channel that placed the order: web | mobile',
+  })
   @ApiOperation({ summary: 'Creates one order for each unique idempotency key' })
   async checkout(
     @CurrentUser('id') userId: number,
     @Headers('idempotency-key') idempotencyKey: string | undefined,
+    @Headers('x-client-platform') clientPlatform: string | undefined,
     @Body() dto: CheckoutDto,
   ) {
     const order = await this.checkoutUseCase.execute({
       userId,
       idempotencyKey,
+      origin: clientPlatform,
       items: dto.products?.map((line) => ({
         productId: line.id_produto,
         quantity: line.quantidade,
       })),
       paymentMethod: dto.paymentMethod,
       couponCode: dto.couponCode,
+      shipTo: dto.deliveryAddress && {
+        state: dto.deliveryAddress.state,
+        city: dto.deliveryAddress.city,
+      },
     });
     return { mensagem: 'Pedido realizado com sucesso!', pedido: presentOrder(order) };
   }

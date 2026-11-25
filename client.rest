@@ -274,9 +274,15 @@ Content-Type: application/json
 DELETE {{apiUrl}}/admin/clientes/{{clienteId}}
 Authorization: Bearer {{token}}
 
-### Listar carrinho
-GET {{apiUrl}}/carrinho
+### Listar carrinho (frete pelo endereco salvo ou pelo destino informado)
+GET {{apiUrl}}/carrinho?estado=SP&cidade=Diadema
 Authorization: Bearer {{token}}
+
+### Calcular frete (publico)
+POST {{apiUrl}}/frete/calcular
+Content-Type: application/json
+
+{ "subtotal": 19.8, "estado": "SP", "cidade": "Santo André" }
 
 ### Adicionar produto ao carrinho
 POST {{apiUrl}}/carrinho/add

@@ -52,9 +52,11 @@ export const presentOrder = (order: Order) => ({
   id_pedido: order.id,
   id_usuario: order.userId,
   valor_total: Number(order.totalAmount),
+  valor_frete: Number(order.shippingAmount ?? 0),
   status: order.status,
   metodo_pagamento: order.paymentMethod,
   id_cupom: order.couponId,
+  origem: order.origin ?? null,
   data_pedido: order.createdAt,
   ...(order.items && { itens_pedido: order.items.map(presentOrderItem) }),
 });
@@ -93,6 +95,7 @@ export const presentSession = (result: LoginResult | RegisterUserResult) => {
       nivel: user.role,
       ...('createdAt' in user && { data_criacao: user.createdAt }),
       ...(user.profilePhoto !== undefined && { foto_perfil: user.profilePhoto }),
+      ...('emailVerified' in user && { email_verificado: user.emailVerified }),
     },
   };
 };
@@ -111,6 +114,7 @@ export const presentCart = (cart: CartSummary) => ({
   frete: cart.shipping,
   total: cart.total,
   freteGratis: cart.freeShipping,
+  freteCalculado: cart.shippingCalculated,
   itemCount: cart.itemCount,
 });
 
@@ -121,7 +125,9 @@ export const presentAdminOrder = (order: AdminOrderView) => ({
   data_pedido: order.createdAt,
   status: order.status,
   valor_total: order.totalAmount,
+  valor_frete: order.shippingAmount,
   metodo_pagamento: order.paymentMethod,
+  origem: order.origin,
   itens: order.items.map((item) => ({
     nome: item.name,
     quantidade: item.quantity,
@@ -172,6 +178,7 @@ export const presentDashboard = (dashboard: DashboardView) => ({
     data_pedido: transaction.createdAt,
     status: transaction.status,
     valor_total: transaction.totalAmount,
+    origem: transaction.origin,
   })),
 });
 

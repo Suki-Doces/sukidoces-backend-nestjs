@@ -6,7 +6,7 @@ export class TypeOrmProductRepository implements ProductRepository {
   constructor(private readonly repo: Repository<Product>) {}
 
   findByIdWithCategory(id: number) {
-    return this.repo.findOne({ where: { id }, relations: ['category'] });
+    return this.repo.findOne({ where: { id }, relations: { category: true } });
   }
 
   findById(id: number) {
@@ -22,12 +22,15 @@ export class TypeOrmProductRepository implements ProductRepository {
       where: { active: true },
       take,
       order: { id: 'DESC' },
-      relations: ['category'],
+      relations: { category: true },
     });
   }
 
   findActiveByIds(ids: number[]) {
-    return this.repo.find({ where: { id: In(ids), active: true }, relations: ['category'] });
+    return this.repo.find({
+      where: { id: In(ids), active: true },
+      relations: { category: true },
+    });
   }
 
   findNewSince(since: Date, take: number) {
@@ -101,11 +104,11 @@ export class TypeOrmProductRepository implements ProductRepository {
   findBasicInfoByIds(ids: number[]) {
     return this.repo.find({
       where: { id: In(ids) },
-      select: ['id', 'name', 'price', 'image', 'quantity'],
+      select: { id: true, name: true, price: true, image: true, quantity: true },
     });
   }
 
   findAllBasicInfo() {
-    return this.repo.find({ select: ['id', 'name', 'price'] });
+    return this.repo.find({ select: { id: true, name: true, price: true } });
   }
 }

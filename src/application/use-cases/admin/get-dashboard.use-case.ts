@@ -29,6 +29,7 @@ export interface DashboardView {
     createdAt: Date;
     status: string;
     totalAmount: number;
+    origin: string | null;
   }[];
 }
 
@@ -99,6 +100,7 @@ export class GetDashboardUseCase {
         createdAt: order.createdAt,
         status: order.status,
         totalAmount: Number(order.totalAmount),
+        origin: order.origin ?? null,
       })),
     };
   }

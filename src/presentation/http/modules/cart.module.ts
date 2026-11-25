@@ -6,6 +6,7 @@ import {
   RemoveCartItemUseCase,
   UpdateCartItemQuantityUseCase,
 } from '@application/use-cases/cart';
+import { ShippingDestinationResolver } from '@application/shipping';
 
 import { CartController } from '@presentation/http/controllers';
 
@@ -17,6 +18,7 @@ import { CartController } from '@presentation/http/controllers';
     UpdateCartItemQuantityUseCase,
     RemoveCartItemUseCase,
     ClearCartUseCase,
+    ShippingDestinationResolver,
   ],
 })
 export class CartModule {}

@@ -1,0 +1,78 @@
+name: CI
+
+on:
+  push:
+    branches: [main, develop, master]
+  pull_request:
+    branches: [main, develop, master]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    env:
+      DATABASE_URL: mysql://sukidoces:sukidoces@127.0.0.1:3306/sukidoces
+      TEST_DATABASE_URL: mysql://sukidoces:sukidoces@127.0.0.1:3306/sukidoces
+
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: rootpassword
+          MYSQL_DATABASE: sukidoces
+          MYSQL_USER: sukidoces
+          MYSQL_PASSWORD: sukidoces
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -uroot -prootpassword --silent"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=30
+          --health-start-period=10s
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Type-check
+        run: npx tsc --noEmit      # ou: npm run type-check, se existir
+
+      - name: Check the dependency rule between layers
+        run: npm run check:architecture
+
+      - name: Wait for MySQL (safety net)
+        run: |
+          for i in {1..30}; do
+            (echo > /dev/tcp/127.0.0.1/3306) 2>/dev/null && exit 0
+            sleep 2
+          done
+          echo "MySQL não respondeu em 60s"; exit 1
+
+      - name: Apply migrations to MySQL
+        run: npm run migration:run
+
+      - name: Integration tests
+        run: npm test -- --ci       # troque por --run se for Vitest
+
+      - name: Build
+        run: npm run build

@@ -1,17 +1,17 @@
 import type { User } from './user.entity';
 
 export class ContactMessage {
-  id: number;
-  name: string;
-  email: string;
-  phone: string;
-  subject: string;
-  message: string;
-  userId: number | null;
-  answered: boolean;
-  answer: string | null;
-  answeredAt: Date | null;
-  createdAt: Date;
+  id!: number;
+  name!: string;
+  email!: string;
+  phone!: string;
+  subject!: string;
+  message!: string;
+  userId!: number | null;
+  answered!: boolean;
+  answer!: string | null;
+  answeredAt!: Date | null;
+  createdAt!: Date;
   user?: User | null;
 
   constructor(props?: Partial<ContactMessage>) {

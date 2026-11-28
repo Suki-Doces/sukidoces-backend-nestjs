@@ -2,15 +2,15 @@ import { InsufficientStockError } from '@domain/errors';
 import type { Category } from './category.entity';
 
 export class Product {
-  id: number;
-  name: string;
-  description: string | null;
-  price: number;
-  quantity: number;
-  image: string | null;
-  active: boolean;
-  categoryId: number | null;
-  createdAt: Date;
+  id!: number;
+  name!: string;
+  description!: string | null;
+  price!: number;
+  quantity!: number;
+  image!: string | null;
+  active!: boolean;
+  categoryId!: number | null;
+  createdAt!: Date;
   category?: Category | null;
 
   constructor(props?: Partial<Product>) {

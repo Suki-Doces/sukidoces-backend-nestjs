@@ -1,12 +1,12 @@
 import { CouponType } from '@domain/enums';
 
 export class Coupon {
-  id: number;
-  code: string;
-  type: string;
-  value: number;
-  expiresAt: Date | null;
-  active: boolean;
+  id!: number;
+  code!: string;
+  type!: string;
+  value!: number;
+  expiresAt!: Date | null;
+  active!: boolean;
 
   constructor(props?: Partial<Coupon>) {
     if (props) Object.assign(this, props);

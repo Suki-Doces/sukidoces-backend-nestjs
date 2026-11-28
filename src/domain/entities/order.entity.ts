@@ -12,20 +12,20 @@ import type { User } from './user.entity';
 const CANCELLATION_WINDOW_HOURS = 2;
 
 export class Order {
-  id: number;
-  userId: number;
+  id!: number;
+  userId!: number;
   /** Grand total charged: products - coupon discount + shipping. */
-  totalAmount: number;
+  totalAmount!: number;
   /** Shipping part of `totalAmount` (0 when free and for legacy orders). */
-  shippingAmount: number;
-  status: string;
-  paymentMethod: string | null;
-  couponId: number | null;
-  idempotencyKey: string | null;
-  requestHash: string | null;
+  shippingAmount!: number;
+  status!: string;
+  paymentMethod!: string | null;
+  couponId!: number | null;
+  idempotencyKey!: string | null;
+  requestHash!: string | null;
   /** Channel that placed the order ('web' | 'mobile'); null for legacy orders. */
-  origin: string | null;
-  createdAt: Date;
+  origin!: string | null;
+  createdAt!: Date;
   user?: User;
   items?: OrderItem[];
   coupon?: Coupon | null;

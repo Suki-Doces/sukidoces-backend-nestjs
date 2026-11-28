@@ -2,11 +2,11 @@ import type { Order } from './order.entity';
 import type { Product } from './product.entity';
 
 export class OrderItem {
-  id: number;
-  orderId: number;
-  productId: number;
-  quantity: number;
-  unitPrice: number;
+  id!: number;
+  orderId!: number;
+  productId!: number;
+  quantity!: number;
+  unitPrice!: number;
   order?: Order;
   product?: Product;
 

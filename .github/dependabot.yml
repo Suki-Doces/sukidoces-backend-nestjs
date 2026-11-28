@@ -1,6 +1,5 @@
 version: 2
 updates:
-  # 1. Mantém as dependências do package.json atualizadas
   - package-ecosystem: "npm"
     directory: "/"
     schedule:
@@ -8,7 +7,6 @@ updates:
       day: "monday"
     open-pull-requests-limit: 10
 
-  # 2. Mantém as Actions (checkout, setup-node, upload-artifact) atualizadas
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
@@ -16,11 +14,10 @@ updates:
     commit-message:
       prefix: "ci"
 
-  # 3. Mantém a imagem do Docker (mysql:8.0) atualizada nos arquivos do GitHub Actions
   - package-ecosystem: "docker"
     directory: "/"
     schedule:
       interval: "weekly"
     ignore:
       - dependency-name: "mysql"
-        update-types: ["version-update:semver-major"] # Evita pular para o MySQL 9+ sem você testar
+        update-types: ["version-update:semver-major"]

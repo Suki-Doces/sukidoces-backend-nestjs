@@ -1,10 +1,10 @@
 export class Webhook {
-  id: number;
-  url: string;
+  id!: number;
+  url!: string;
   /** Comma-separated list of subscribed event names. */
-  events: string;
-  active: boolean;
-  createdAt: Date;
+  events!: string;
+  active!: boolean;
+  createdAt!: Date;
 
   constructor(props?: Partial<Webhook>) {
     if (props) Object.assign(this, props);

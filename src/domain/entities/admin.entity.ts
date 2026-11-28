@@ -6,12 +6,12 @@ export interface AdminProfile {
 }
 
 export class Admin {
-  id: number;
-  name: string;
-  email: string;
+  id!: number;
+  name!: string;
+  email!: string;
   /** Password hash — never exposed (see toJSON). */
-  password: string;
-  profilePhoto: string | null;
+  password!: string;
+  profilePhoto!: string | null;
 
   constructor(props?: Partial<Admin>) {
     if (props) Object.assign(this, props);

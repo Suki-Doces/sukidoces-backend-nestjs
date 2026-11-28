@@ -5,36 +5,53 @@ import { ProductRepository, ProductSearchCriteria, ProductSort } from '@domain/r
 export class TypeOrmProductRepository implements ProductRepository {
   constructor(private readonly repo: Repository<Product>) {}
 
-  findByIdWithCategory(id: number) {
-    return this.repo.findOne({ where: { id }, relations: { category: true } });
+  // 👇 Agora mutamos o objeto em vez de criar um novo. Isso preserva os métodos da classe.
+  private mapToDomain(product: Product | null): Product | null {
+    if (!product) return null;
+    product.price = Number(product.price);
+    return product;
   }
 
-  findById(id: number) {
-    return this.repo.findOne({ where: { id } });
+  // 👇 Faz o map e força o tipo Product no final, pois sabemos que o array não terá nulos
+  private mapArrayToDomain(products: Product[]): Product[] {
+    return products.map((p) => this.mapToDomain(p) as Product);
   }
 
-  findManyByIds(ids: number[]) {
-    return this.repo.find({ where: { id: In(ids) } });
+  async findByIdWithCategory(id: number) {
+    const product = await this.repo.findOne({ where: { id }, relations: { category: true } });
+    return this.mapToDomain(product);
   }
 
-  findActiveFeatured(take: number) {
-    return this.repo.find({
+  async findById(id: number) {
+    const product = await this.repo.findOne({ where: { id } });
+    return this.mapToDomain(product);
+  }
+
+  async findManyByIds(ids: number[]) {
+    const products = await this.repo.find({ where: { id: In(ids) } });
+    return this.mapArrayToDomain(products);
+  }
+
+  async findActiveFeatured(take: number) {
+    const products = await this.repo.find({
       where: { active: true },
       take,
       order: { id: 'DESC' },
       relations: { category: true },
     });
+    return this.mapArrayToDomain(products);
   }
 
-  findActiveByIds(ids: number[]) {
-    return this.repo.find({
+  async findActiveByIds(ids: number[]) {
+    const products = await this.repo.find({
       where: { id: In(ids), active: true },
       relations: { category: true },
     });
+    return this.mapArrayToDomain(products);
   }
 
-  findNewSince(since: Date, take: number) {
-    return this.repo
+  async findNewSince(since: Date, take: number) {
+    const products = await this.repo
       .createQueryBuilder('product')
       .leftJoinAndSelect('product.category', 'category')
       .where('product.active = :active', { active: true })
@@ -42,9 +59,10 @@ export class TypeOrmProductRepository implements ProductRepository {
       .orderBy('product.createdAt', 'DESC')
       .take(take)
       .getMany();
+    return this.mapArrayToDomain(products);
   }
 
-  search(
+  async search(
     criteria: ProductSearchCriteria,
     options: { sort?: ProductSort; take?: number; skip?: number },
   ) {
@@ -59,10 +77,11 @@ export class TypeOrmProductRepository implements ProductRepository {
     if (options.take !== undefined) query.take(options.take);
     if (options.skip !== undefined) query.skip(options.skip);
 
-    return query.getMany();
+    const products = await query.getMany();
+    return this.mapArrayToDomain(products);
   }
 
-  count(criteria: ProductSearchCriteria) {
+  async count(criteria: ProductSearchCriteria) {
     const query = this.repo.createQueryBuilder('product');
     this.applyCriteria(query, criteria);
     return query.getCount();
@@ -80,8 +99,10 @@ export class TypeOrmProductRepository implements ProductRepository {
       query.andWhere('product.price <= :maxPrice', { maxPrice: criteria.maxPrice });
   }
 
-  create(data: Partial<Product>) {
-    return this.repo.save(this.repo.create(data));
+  // 👇 Forçamos o retorno como Promise<Product> para bater com a interface
+  async create(data: Partial<Product>): Promise<Product> {
+    const product = await this.repo.save(this.repo.create(data));
+    return this.mapToDomain(product) as Product;
   }
 
   async update(id: number, data: Partial<Product>) {
@@ -101,14 +122,16 @@ export class TypeOrmProductRepository implements ProductRepository {
     await this.repo.update({ id }, { active: false });
   }
 
-  findBasicInfoByIds(ids: number[]) {
-    return this.repo.find({
+  async findBasicInfoByIds(ids: number[]) {
+    const products = await this.repo.find({
       where: { id: In(ids) },
       select: { id: true, name: true, price: true, image: true, quantity: true },
     });
+    return this.mapArrayToDomain(products);
   }
 
-  findAllBasicInfo() {
-    return this.repo.find({ select: { id: true, name: true, price: true } });
+  async findAllBasicInfo() {
+    const products = await this.repo.find({ select: { id: true, name: true, price: true } });
+    return this.mapArrayToDomain(products);
   }
 }

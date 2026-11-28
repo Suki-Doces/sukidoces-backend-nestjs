@@ -16,20 +16,20 @@ export interface UserProfile {
 }
 
 export class User {
-  id: number;
-  name: string;
-  email: string;
+  id!: number;
+  name!: string;
+  email!: string;
   /** Password hash — never exposed (see toJSON). */
-  password: string;
-  phone: string | null;
-  cpf: string | null;
+  password!: string;
+  phone!: string | null;
+  cpf!: string | null;
   addresses: unknown | null;
-  birthDate: Date | null;
-  profilePhoto: string | null;
-  role: string | null;
-  active: boolean | null;
-  emailVerified: boolean;
-  createdAt: Date;
+  birthDate!: Date | null;
+  profilePhoto!: string | null;
+  role!: string | null;
+  active!: boolean | null;
+  emailVerified!: boolean;
+  createdAt!: Date;
   orders?: Order[];
 
   constructor(props?: Partial<User>) {

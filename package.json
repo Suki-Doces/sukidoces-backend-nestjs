@@ -40,7 +40,7 @@
     "@nestjs/swagger": "^11.2.7",
     "@nestjs/throttler": "^6.8.0",
     "@nestjs/typeorm": "^11.0.3",
-    "@sentry/node": "^11.14.0",
+    "@sentry/node": "^11.18.0",
     "bcrypt": "^6.0.0",
     "cache-manager": "^6.4.3",
     "class-transformer": "^0.5.1",

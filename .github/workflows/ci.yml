@@ -46,7 +46,7 @@ jobs:
           --health-start-period=10s
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Setup Node ${{ matrix.node-version }}
         uses: actions/setup-node@v4
